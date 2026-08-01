@@ -1,0 +1,168 @@
+# RULE_CODE.md
+
+GDScript / Godot の書き方の規約。FcLab の開発中に実際にCIで落ちた事例から確定させた。
+
+最終更新: v1.0（Godot 4.7.1）
+
+---
+
+## 1. 環境（固定）
+
+| 項目 | 値 |
+|---|---|
+| Godot | 4.7.1.stable |
+| レンダラー | Compatibility (`gl_compatibility`) |
+| ビルド | GitHub Actions（ヘッドレスエクスポート） |
+| 署名 | `debug.keystore` をリポジトリに固定。公開しないため debug のまま |
+| 開発環境 | Termux + GitHub Actions のみ。Godotエディタは使わない |
+
+Androidエクスポートには `textures/vram_compression/import_etc2_astc=true` が必須。
+
+---
+
+## 2. 型推論（`:=`）を使ってはいけない場面
+
+**これがCIで落ちた原因の全て。** 以下は必ず明示型で書く。
+
+### 2-1. 配列リテラルからのインデックス取得
+
+```
+var c := ["a", "b", "c"][i]        # NG
+var c: String = ["a", "b", "c"][i] # OK
+```
+
+### 2-2. 三項演算子
+
+```
+var col := Pal.c("red") if hit else Pal.c("white")  # NG
+var col: Color = Pal.c("white")                      # OK
+if hit:
+	col = Pal.c("red")
+```
+
+`if / else` に分けて書くのが最も安全。
+
+### 2-3. Variantを返す組み込み関数
+
+```
+var bs := 1.0 + floor(k * 15.0)        # NG
+var bs: float = 1.0 + floor(k * 15.0)  # OK
+```
+
+### 2-4. エンジンAPIの戻り値
+
+```
+var c := img.get_pixel(x, y)        # NG
+var c: Color = img.get_pixel(x, y)  # OK
+
+var small := src.duplicate()        # NG
+var small: Image = src.duplicate()  # OK
+```
+
+`get_pixel` / `duplicate` / `get` / `pop_front` / `slice` / `keys` / `values` などが該当する。
+
+### 例外
+
+自作関数の戻り値に型宣言がある場合は `:=` で問題ない。
+
+```
+func _size() -> int: ...
+var n := _size()   # OK
+```
+
+---
+
+## 3. 変数名の衝突
+
+**同一スコープで同じ名前を二度宣言するとパースエラーになる。**
+
+```
+func _draw() -> void:
+	var r := _cv_rect()
+	for r in canvas:   # NG: r が同一スコープで二重定義
+		...
+```
+
+連続する別々の `for` ループで同じ変数名を使うのは問題ない（スコープが閉じるため）。
+
+```
+for i in 5:
+	...
+for i in 10:   # OK
+	...
+```
+
+---
+
+## 4. スクリプト間の参照
+
+**型を付けた変数に、その型に無いプロパティ・メソッドでアクセスすると静的エラーになる。**
+
+```
+var world: Node2D
+world.player = x   # NG: Node2D に player は無い
+
+var world           # OK: 型なしなら動的解決
+world.player = x
+```
+
+章やコンポーネント間の相互参照は型を付けない。
+
+---
+
+## 5. シーン構成
+
+- **`.tscn` は最小限に留める。** ルートノード1つとスクリプトのアタッチのみ
+- ノードの生成・配置は全てコードで行う
+- 理由: `.tscn` の手書きは事故が多く、Termux環境では編集手段が限られる
+
+---
+
+## 6. ステートマシン
+
+`FcLab/scripts/ch/Ch08Srpg.gd` および `GymApp/scripts/Player.gd` が基準実装。
+
+- `enum State` と `var state: State` を持つ
+- 遷移は必ず `_change_state()` を通す。`state` への直接代入は禁止
+- `_enter_state()` / `_exit_state()` で入退場処理を分離
+- 各状態の毎フレーム処理は `_state_xxx(delta)` に1状態1関数
+- `_physics_process()` は `match state:` でディスパッチするだけ
+
+---
+
+## 7. 描画
+
+- 描画は全て `_draw()` 内で行う。`queue_redraw()` を `_process()` で呼ぶ
+- スプライトは `Image` から `ImageTexture` を生成し、**キャッシュする**（`Gfx.gd` 参照）
+- 重い変換処理（縮小・減色）は結果をキャッシュする。毎フレーム計算しない
+
+---
+
+## 8. CIとエラー対応
+
+**エラーの一次発見者はClaude。** 関口さんに渡るのはビルドが通ったAPKだけ。
+
+ワークフローは以下の順で走る。
+
+1. `godot --headless --import` — **スクリプトエラーはここで落ちる**
+2. `godot --headless --export-debug "Android"` — APK生成
+3. Releases に `build-<番号>` として公開
+
+`import.log` に `SCRIPT ERROR` / `Parse Error` / `Failed to load script` が含まれたら失敗扱いにする。
+
+**手作業でのパッチ（sed等）をユーザーに渡さない。** 修正は必ずZIPを作り直して配布する。
+
+---
+
+## 9. 配布の型
+
+ZIPは毎回別名。形式は `プロジェクト名_vX.X.zip`。展開後のトップレベルフォルダ名はプロジェクト名で固定。
+
+```
+cd ~
+cp /sdcard/Download/プロジェクト名_vX.X.zip .
+unzip -o プロジェクト名_vX.X.zip
+bash ~/プロジェクト名/deploy.sh "vX.X 要約"
+```
+
+`.git` を消さないため `rm -rf` は使わない。

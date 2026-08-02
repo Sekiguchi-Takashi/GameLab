@@ -6,6 +6,7 @@ var map_i := 0
 
 func setup(i: int) -> void:
 	map_i = i
+	Save.trace("PSET%d" % i)
 
 func _row(i: int) -> Rect2:
 	return Rect2(16.0, 92.0 + float(i) * 40.0, 400.0, 36.0)

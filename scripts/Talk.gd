@@ -7,9 +7,17 @@ var page := 0
 var shown := 0.0
 var title := ""
 
+var traced := false
+
 func setup(t: String, l: Array) -> void:
 	title = t
-	lines = l
+	lines = []
+	for x in l:
+		lines.append(String(x))
+	if lines.is_empty():
+		lines.append("...")
+	traced = false
+	Save.trace("TSET%d" % lines.size())
 	page = 0
 	shown = 0.0
 
@@ -19,6 +27,7 @@ func _full() -> bool:
 	return shown >= float(String(lines[page]).length())
 
 func tap(_p: Vector2) -> void:
+	Save.trace("TTAP%d" % page)
 	Sound.play("select")
 	if not _full():
 		shown = 9999.0
@@ -33,6 +42,9 @@ func _process(d: float) -> void:
 	queue_redraw()
 
 func _draw() -> void:
+	if not traced:
+		traced = true
+		Save.trace("TDRAW")
 	draw_rect(Rect2(0.0, 0.0, 640.0, 360.0), Color(0.04, 0.05, 0.07, 1.0))
 	Gfx.jtext(self, title, Vector2(20.0, 20.0), Pal.c("cyan"), 17)
 	var wx := 20.0

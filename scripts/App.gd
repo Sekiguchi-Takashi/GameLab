@@ -60,7 +60,9 @@ func _go_prep() -> void:
 		_show(S.END)
 		return
 	Save.rest()
+	Save.trace("REST")
 	prep_n.setup(Save.map_index)
+	Sound.bgm("title")
 	_show(S.PREP)
 
 func _on_deploy() -> void:
@@ -69,6 +71,7 @@ func _on_deploy() -> void:
 	_show(S.TALK_IN)
 
 func _on_talk_done() -> void:
+	Save.trace("TDONE%d" % state)
 	if state == S.TALK_IN:
 		_start_battle()
 	else:
@@ -82,7 +85,10 @@ func _start_battle() -> void:
 	Save.trace("BATTLE%d" % Save.map_index)
 	Sound.bgm("battle")
 	if battle_n != null:
+		battle_n.finished.disconnect(_on_battle_done)
+		remove_child(battle_n)
 		battle_n.queue_free()
+		battle_n = null
 	battle_n = preload("res://scripts/Battle.gd").new()
 	battle_n.finished.connect(_on_battle_done)
 	add_child(battle_n)
@@ -94,13 +100,27 @@ func _on_battle_done(win: bool) -> void:
 	Save.trace("DONE" + str(win))
 	if not win:
 		Sound.bgm("title")
+		if battle_n != null:
+			battle_n.finished.disconnect(_on_battle_done)
+			remove_child(battle_n)
+			battle_n.queue_free()
+			battle_n = null
 		_show(S.TITLE)
 		return
-	var bu: Array = battle_n.units
+	var bu: Array = []
+	if battle_n != null:
+		bu = battle_n.units
 	for u in bu:
 		var uu: Dictionary = u
 		if int(uu["team"]) == 0:
 			Save.store(uu)
+	Save.trace("HARVEST")
+	if battle_n != null:
+		battle_n.finished.disconnect(_on_battle_done)
+		remove_child(battle_n)
+		battle_n.queue_free()
+		battle_n = null
+	Save.trace("FREED")
 	Save.resupply()
 	Save.trace("STORE")
 	var m: Dictionary = Maps.get_map(Save.map_index)

@@ -91,6 +91,7 @@ func _on_battle_done(win: bool) -> void:
 		var uu: Dictionary = u
 		if int(uu["team"]) == 0:
 			Save.store(uu)
+	Save.resupply()
 	var m: Dictionary = Maps.get_map(Save.map_index)
 	talk_n.setup(Gfx.L("勝利", "VICTORY"), Maps.outro_of(m))
 	_show(S.TALK_OUT)

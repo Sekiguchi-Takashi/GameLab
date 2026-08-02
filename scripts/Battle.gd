@@ -2,7 +2,7 @@ extends Node2D
 
 signal finished(win: bool)
 
-enum Sub { MOVE, TARGET, SKILL }
+enum Sub { MOVE, TARGET, SKILL, ITEM }
 
 const VIEW := Rect2(0.0, 20.0, 640.0, 296.0)
 const TS := 32.0
@@ -43,6 +43,8 @@ var anim: Dictionary = {}
 var queue: Array = []
 var ai_t := 0.0
 
+var item_open := false
+var cur_item := ""
 var banner := ""
 var banner_t := 0.0
 
@@ -204,9 +206,27 @@ func _begin_round() -> void:
 		var uu: Dictionary = units[i]
 		uu["moved"] = false
 		uu["acted"] = false
+	_terrain_tick()
 	oi = -1
-	_banner("ROUND %d" % rnd)
+	_banner("%s %d" % [Gfx.L("第", "ROUND"), rnd])
 	_next_unit()
+
+func _terrain_tick() -> void:
+	for i in units.size():
+		var u: Dictionary = units[i]
+		if int(u["hp"]) <= 0:
+			continue
+		var t: int = int(board.tick(int(u["x"]), int(u["y"])))
+		if t == 0:
+			continue
+		var before: int = int(u["hp"])
+		u["hp"] = clampi(before + t, 0, int(u["mhp"]))
+		var delta: int = int(u["hp"]) - before
+		if delta != 0:
+			u["flash"] = 0.22
+			fx.hit(Vector2(u["px"]), absi(delta), false)
+		if int(u["hp"]) <= 0:
+			u["fade"] = 0.0
 
 func _by_speed(a, b) -> bool:
 	var ua: Dictionary = units[int(a)]
@@ -360,6 +380,10 @@ func path_to(goal: Vector2i) -> Array:
 		out.push_front(cur)
 		guard += 1
 	return out
+
+func eff_rng(i: int) -> int:
+	var u: Dictionary = units[i]
+	return int(u["rng"]) + int(board.range_bonus(int(u["x"]), int(u["y"])))
 
 func dist(a: int, b: int) -> int:
 	var ua: Dictionary = units[a]
@@ -549,7 +573,7 @@ func _step_anim(dt: float) -> void:
 			anim["done"] = true
 			_face_to(ai, bi)
 			_damage(ai, bi, float(anim["m"]))
-			if bool(anim["c"]) and int(ub["hp"]) > 0 and dist(ai, bi) <= int(ub["rng"]):
+			if bool(anim["c"]) and int(ub["hp"]) > 0 and dist(ai, bi) <= eff_rng(bi):
 				q_attack(bi, ai, 1.0, false)
 		if p3 >= 1.0:
 			ua["px"] = home
@@ -634,7 +658,7 @@ func _ai_act() -> void:
 		e["x"] = c.x
 		e["y"] = c.y
 		var terr: float = float(board.defense(c.x, c.y))
-		var hostiles: Array = in_range(i, int(e["rng"]), true)
+		var hostiles: Array = in_range(i, int(e["rng"]) + int(board.range_bonus(c.x, c.y)), true)
 		if hostiles.is_empty():
 			var near := 999
 			for j in units.size():
@@ -704,14 +728,17 @@ func _cell(p: Vector2) -> Vector2i:
 	return Vector2i(int(w.x / TS), int(w.y / TS))
 
 func _btn(i: int) -> Rect2:
-	return Rect2(340.0 + float(i) * 100.0, 322.0, 94.0, 30.0)
+	return Rect2(278.0 + float(i) * 91.0, 322.0, 85.0, 30.0)
+
+func _item_row(i: int) -> Rect2:
+	return Rect2(278.0, 224.0 + float(i) * 30.0, 267.0, 28.0)
 
 func _my_turn() -> bool:
 	return not over and active >= 0 and int(units[active]["team"]) == 0 and not busy()
 
 func _tap(p: Vector2) -> void:
 	if over:
-		if _btn(2).has_point(p) and not result_sent:
+		if _btn(3).has_point(p) and not result_sent:
 			result_sent = true
 			finished.emit(String(msg) == "CLEAR")
 		return
@@ -733,7 +760,7 @@ func _tap(p: Vector2) -> void:
 			sub = Sub.TARGET
 			reach.clear()
 			path_preview.clear()
-			targets = in_range(active, int(u["rng"]), true)
+			targets = in_range(active, eff_rng(active), true)
 			pending = -1
 			msg = Gfx.L("対象を選ぶ", "PICK A TARGET")
 		return
@@ -741,7 +768,21 @@ func _tap(p: Vector2) -> void:
 		Sound.play("select")
 		_open_skill()
 		return
+	if item_open:
+		for i in Units.ITEMS.size():
+			if _item_row(i).has_point(p):
+				_choose_item(String(Units.ITEMS[i]))
+				return
+		item_open = false
+		return
 	if _btn(2).has_point(p):
+		Sound.play("select")
+		item_open = true
+		sub = Sub.MOVE
+		targets.clear()
+		pending = -1
+		return
+	if _btn(3).has_point(p):
 		Sound.play("cancel")
 		_end_unit()
 		return
@@ -751,7 +792,7 @@ func _tap(p: Vector2) -> void:
 		return
 	var hit := unit_at(c.x, c.y)
 
-	if sub == Sub.TARGET or sub == Sub.SKILL:
+	if sub == Sub.TARGET or sub == Sub.SKILL or sub == Sub.ITEM:
 		if hit >= 0 and targets.has(hit):
 			if pending == hit:
 				_do_action(hit)
@@ -784,6 +825,60 @@ func _tap(p: Vector2) -> void:
 			msg = Gfx.L("もう一度で移動", "TAP AGAIN TO MOVE")
 	else:
 		cursor = c
+
+func _choose_item(k: String) -> void:
+	item_open = false
+	if int(Save.items[k]) <= 0:
+		msg = Gfx.L("在庫がない", "NONE LEFT")
+		return
+	var info: Dictionary = Units.ITEM_INFO[k]
+	cur_item = k
+	if int(info["rng"]) == 0:
+		_use_item(active)
+		_end_unit()
+		return
+	reach.clear()
+	path_preview.clear()
+	pending = -1
+	targets = in_range(active, int(info["rng"]), not bool(info["ally"]))
+	if bool(info["ally"]):
+		targets.append(active)
+	if targets.is_empty():
+		msg = Gfx.L("対象がいない", "NO TARGET")
+		sub = Sub.MOVE
+		_calc_reach(active)
+		return
+	sub = Sub.ITEM
+	msg = "%s : %s" % [Units.item_label(k), Gfx.L("対象を選ぶ", "PICK TARGET")]
+
+func _use_item(tgt: int) -> void:
+	var k := cur_item
+	var info: Dictionary = Units.ITEM_INFO[k]
+	Save.items[k] = int(Save.items[k]) - 1
+	var u: Dictionary = units[tgt]
+	if k == "POTION":
+		var before: int = int(u["hp"])
+		u["hp"] = mini(before + int(info["power"]), int(u["mhp"]))
+		u["flash"] = 0.22
+		fx.hit(Vector2(u["px"]), int(u["hp"]) - before, false)
+		Sound.play("heal")
+		msg = "%s %d" % [Gfx.L("回復", "HEAL"), int(u["hp"]) - before]
+	elif k == "NUT":
+		u["mp"] = mini(int(u["mp"]) + int(info["power"]), int(u["mmp"]) + 2)
+		u["flash"] = 0.22
+		Sound.play("heal")
+		msg = Gfx.L("MP回復", "MP UP")
+	else:
+		var dmg: int = int(info["power"])
+		u["hp"] = maxi(int(u["hp"]) - dmg, 0)
+		u["flash"] = 0.22
+		fx.hit(Vector2(u["px"]), dmg, false)
+		Sound.play("hit")
+		msg = "%d %s" % [dmg, Gfx.L("ダメージ", "DAMAGE")]
+		if int(u["hp"]) <= 0:
+			Sound.play("down")
+			queue.append({"k": "death", "u": tgt, "t": 0.0})
+	cur_item = ""
 
 func _skill_of(i: int) -> String:
 	return String(units[i]["skill"])
@@ -818,6 +913,10 @@ func _open_skill() -> void:
 
 func _do_action(tgt: int) -> void:
 	var u: Dictionary = units[active]
+	if sub == Sub.ITEM:
+		_use_item(tgt)
+		_end_unit()
+		return
 	if sub == Sub.TARGET:
 		q_attack(active, tgt, 1.0, true)
 		_end_unit()
@@ -888,6 +987,7 @@ func _draw() -> void:
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	fx.draw_flash(self, VIEW)
 	_draw_hud()
+	_draw_items()
 	_draw_banner()
 
 func _tile_rect(x: int, y: int) -> Rect2:
@@ -1023,7 +1123,7 @@ func _draw_hud() -> void:
 		Gfx.text(self, "ATK %d" % int(u["atk"]), Vector2(126.0, 322.0), Pal.c("gray"))
 		Gfx.text(self, "DEF %d" % int(u["def"]), Vector2(126.0, 338.0), Pal.c("gray"))
 		Gfx.text(self, "MOV %d" % int(u["mov"]), Vector2(196.0, 322.0), Pal.c("gray"))
-		Gfx.text(self, "SPD %d" % int(u["spd"]), Vector2(196.0, 338.0), Pal.c("gray"))
+		Gfx.text(self, "RNG %d" % eff_rng(show), Vector2(196.0, 338.0), Pal.c("gray"))
 		Gfx.text(self, "EXP %d" % int(u["exp"]), Vector2(266.0, 322.0), Pal.c("cyan"))
 		if pending >= 0:
 			if sub == Sub.SKILL and _skill_of(active) == "HEAL":
@@ -1038,10 +1138,10 @@ func _draw_hud() -> void:
 						mult = 0.9
 				Gfx.text(self, "%d DMG %s" % [forecast(active, pending, mult), flank_name(active, pending)], Vector2(266.0, 338.0), Pal.c("orange"))
 	if not over and active >= 0 and int(units[active]["team"]) == 0:
-		var lbls: Array = [Gfx.L("攻撃", "ATTACK"), Units.skill_label(_skill_of(active)), Gfx.L("待機", "WAIT")]
+		var lbls: Array = [Gfx.L("攻撃", "ATTACK"), Units.skill_label(_skill_of(active)), Gfx.L("道具", "ITEM"), Gfx.L("待機", "WAIT")]
 		if String(lbls[1]) == "":
 			lbls[1] = Gfx.L("技", "SKILL")
-		for i in 3:
+		for i in 4:
 			var b := _btn(i)
 			_panel(b)
 			var lc: Color = Pal.c("white")
@@ -1050,10 +1150,23 @@ func _draw_hud() -> void:
 			var s2: String = lbls[i]
 			Gfx.jtext(self, s2, Vector2(b.position.x + (b.size.x - Gfx.jwidth(s2, 16)) * 0.5, b.position.y + 6.0), lc, 16)
 	elif over:
-		var b2 := _btn(2)
+		var b2 := _btn(3)
 		_panel(b2)
 		var nx := Gfx.L("次へ", "NEXT")
 		Gfx.jtext(self, nx, Vector2(b2.position.x + (b2.size.x - Gfx.jwidth(nx, 16)) * 0.5, b2.position.y + 6.0), Pal.c("white"), 16)
+
+func _draw_items() -> void:
+	if not item_open:
+		return
+	for i in Units.ITEMS.size():
+		var k: String = Units.ITEMS[i]
+		var r := _item_row(i)
+		_panel(r)
+		var n: int = int(Save.items[k])
+		var col: Color = Pal.c("white")
+		if n <= 0:
+			col = Pal.c("dgray")
+		Gfx.jtext(self, "%s  x%d" % [Units.item_label(k), n], Vector2(r.position.x + 10.0, r.position.y + 5.0), col, 15)
 
 func _draw_banner() -> void:
 	if banner_t <= 0.0:

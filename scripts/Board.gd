@@ -2,8 +2,10 @@ extends Node2D
 
 const TS := 32.0
 
-const COST := {0: 1, 1: 1, 2: 99, 3: 99, 4: 2, 5: 1}
-const DEF := {0: 0, 1: 0, 2: 0, 3: 3, 4: 2, 5: 0}
+const COST := {0: 1, 1: 1, 2: 99, 3: 99, 4: 2, 5: 1, 6: 2, 7: 1, 8: 2, 9: 3}
+const DEF := {0: 0, 1: 0, 2: 0, 3: 3, 4: 2, 5: 0, 6: 0, 7: 0, 8: 2, 9: 4}
+const TICK := {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: -3, 7: 4, 8: 0, 9: 0}
+const BONUS_RNG := {8: 1}
 
 var W := 20
 var H := 14
@@ -38,6 +40,15 @@ func cost(x: int, y: int) -> int:
 
 func defense(x: int, y: int) -> int:
 	return int(DEF[at(x, y)])
+
+func tick(x: int, y: int) -> int:
+	return int(TICK[at(x, y)])
+
+func range_bonus(x: int, y: int) -> int:
+	var k: int = at(x, y)
+	if BONUS_RNG.has(k):
+		return int(BONUS_RNG[k])
+	return 0
 
 func world_size() -> Vector2:
 	return Vector2(float(W) * TS, float(H) * TS)

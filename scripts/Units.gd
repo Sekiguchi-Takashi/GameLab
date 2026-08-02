@@ -8,6 +8,9 @@ const STATS := {
 	"CLERIC": {"hp": 22, "atk": 6, "def": 3, "mov": 4, "rng": 1, "spd": 6, "mp": 4, "skill": "HEAL", "label": "CLERIC"},
 	"ORC": {"hp": 26, "atk": 9, "def": 4, "mov": 3, "rng": 1, "spd": 3, "mp": 0, "skill": "", "label": "ORC"},
 	"WOLF": {"hp": 19, "atk": 8, "def": 2, "mov": 5, "rng": 1, "spd": 9, "mp": 0, "skill": "", "label": "WOLF"},
+	"BOWMAN": {"hp": 18, "atk": 8, "def": 2, "mov": 4, "rng": 2, "spd": 7, "mp": 0, "skill": "", "label": "BOWMAN"},
+	"SHAMAN": {"hp": 17, "atk": 11, "def": 2, "mov": 3, "rng": 2, "spd": 5, "mp": 0, "skill": "", "label": "SHAMAN"},
+	"HEAVY": {"hp": 34, "atk": 9, "def": 8, "mov": 2, "rng": 1, "spd": 2, "mp": 0, "skill": "", "label": "HEAVY"},
 }
 
 const SKILL := {
@@ -21,11 +24,23 @@ const SKILL := {
 const JA_NAME := {
 	"KNIGHT": "騎士", "LANCER": "槍兵", "ARCHER": "弓兵", "MAGE": "魔道士",
 	"CLERIC": "僧侶", "ORC": "野盗", "WOLF": "狼",
+	"BOWMAN": "射手", "SHAMAN": "呪術師", "HEAVY": "重装",
 }
 
 const JA_SKILL := {
 	"GUARD": "防御", "PIERCE": "貫き", "SNIPE": "狙撃", "BLAST": "爆炎", "HEAL": "治癒",
 }
+
+const ITEMS := ["POTION", "NUT", "STONE"]
+const ITEM_JA := {"POTION": "傷薬", "NUT": "活力の実", "STONE": "投げ石"}
+const ITEM_INFO := {
+	"POTION": {"rng": 1, "ally": true, "power": 15},
+	"NUT": {"rng": 0, "ally": true, "power": 2},
+	"STONE": {"rng": 3, "ally": false, "power": 7},
+}
+
+func item_label(k: String) -> String:
+	return Gfx.L(String(ITEM_JA[k]), k)
 
 func label(kind: String) -> String:
 	var st: Dictionary = STATS[kind]

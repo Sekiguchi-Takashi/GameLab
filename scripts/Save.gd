@@ -4,12 +4,14 @@ const PATH := "user://save.json"
 
 var map_index := 0
 var roster: Array = []
+var items: Dictionary = {"POTION": 3, "NUT": 2, "STONE": 3}
 
 func has_save() -> bool:
 	return FileAccess.file_exists(PATH)
 
 func new_game() -> void:
 	map_index = 0
+	items = {"POTION": 3, "NUT": 2, "STONE": 3}
 	roster = []
 	for k in ["KNIGHT", "LANCER", "ARCHER", "MAGE", "CLERIC"]:
 		var u: Dictionary = Units.make(String(k), 0, 0, 0)
@@ -34,6 +36,10 @@ func store(u: Dictionary) -> void:
 			return
 	roster.append(s)
 
+func resupply() -> void:
+	items["POTION"] = int(items["POTION"]) + 1
+	items["STONE"] = int(items["STONE"]) + 1
+
 func rest() -> void:
 	for i in roster.size():
 		var r: Dictionary = roster[i]
@@ -44,7 +50,7 @@ func save_game() -> void:
 	var f := FileAccess.open(PATH, FileAccess.WRITE)
 	if f == null:
 		return
-	f.store_string(JSON.stringify({"map": map_index, "roster": roster}))
+	f.store_string(JSON.stringify({"map": map_index, "roster": roster, "items": items}))
 	f.close()
 
 func load_game() -> bool:
@@ -76,6 +82,13 @@ func load_game() -> bool:
 			else:
 				out[key] = int(ed[k])
 		roster.append(out)
+	items = {"POTION": 3, "NUT": 2, "STONE": 3}
+	if d.has("items"):
+		var it: Dictionary = d["items"]
+		for k in Units.ITEMS:
+			var key: String = k
+			if it.has(key):
+				items[key] = int(it[key])
 	if roster.is_empty():
 		new_game()
 	return true

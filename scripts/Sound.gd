@@ -17,8 +17,13 @@ func _ready() -> void:
 	_bgm = AudioStreamPlayer.new()
 	_bgm.volume_db = -8.0
 	add_child(_bgm)
+	_bgm.finished.connect(_on_bgm_finished)
 
-func _wav(buf: PackedFloat32Array, loop: bool) -> AudioStreamWAV:
+func _on_bgm_finished() -> void:
+	if enabled and _cur != "" and _bgm.stream != null:
+		_bgm.play()
+
+func _wav(buf: PackedFloat32Array, _loop: bool) -> AudioStreamWAV:
 	var n := buf.size()
 	var bytes := PackedByteArray()
 	bytes.resize(n * 2)
@@ -30,10 +35,7 @@ func _wav(buf: PackedFloat32Array, loop: bool) -> AudioStreamWAV:
 	w.mix_rate = RATE
 	w.stereo = false
 	w.data = bytes
-	if loop:
-		w.loop_mode = AudioStreamWAV.LOOP_FORWARD
-		w.loop_begin = 0
-		w.loop_end = n
+	w.loop_mode = AudioStreamWAV.LOOP_DISABLED
 	return w
 
 func _hz(note: int) -> float:
@@ -102,12 +104,11 @@ func play(name: String) -> void:
 	for p in _players:
 		var pp: AudioStreamPlayer = p
 		if not pp.playing:
+			pp.stop()
 			pp.stream = st
 			pp.play()
 			return
-	var p0: AudioStreamPlayer = _players[0]
-	p0.stream = st
-	p0.play()
+	return
 
 const SONGS := {
 	"title": {
@@ -182,12 +183,14 @@ func bgm(name: String) -> void:
 		return
 	if not _bgm_cache.has(name):
 		_bgm_cache[name] = _build_song(name)
+	_bgm.stop()
 	_bgm.stream = _bgm_cache[name]
 	_bgm.play()
 
 func toggle() -> void:
 	enabled = not enabled
 	if not enabled:
+		_cur = ""
 		_bgm.stop()
 	else:
 		var c := _cur

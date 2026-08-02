@@ -14,6 +14,8 @@ Pal="*res://scripts/Pal.gd"
 Art="*res://scripts/Art.gd"
 Gfx="*res://scripts/Gfx.gd"
 Units="*res://scripts/Units.gd"
+Maps="*res://scripts/Maps.gd"
+Save="*res://scripts/Save.gd"
 
 [display]
 

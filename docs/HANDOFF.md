@@ -41,7 +41,7 @@ bash ~/GameLab/deploy.sh "コメント"
 push すると GitHub Actions が走り、Releases に `build-<番号>` として APK が出る。
 **エラーの一次発見者はClaude。** ユーザーに渡るのはビルドが通ったAPKだけ。
 
-## 現在のゲーム内容（v2.3）
+## 現在のゲーム内容（v3.0）
 
 タクティクスオウガ型SRPGの土台。
 
@@ -107,3 +107,44 @@ push すると GitHub Actions が走り、Releases に `build-<番号>` とし�
 
 確認項目はアプリ内の `CHECK` 画面にある。触って OK / NG を付け、`COPY RESULT` を押してチャットに貼れば、Claudeがそのまま受け取る。
 項目は `scripts/Check.gd` の `ITEMS` にあり、バージョンごとにClaudeが書き換える。
+
+## v3.0 で追加（ゲームとしての形）
+
+**画面構成を分割した。** `App.gd` が画面遷移を管理する。
+
+```
+TITLE -> PREP -> TALK(intro) -> BATTLE -> TALK(outro) -> PREP(next) ... -> END
+```
+
+- `App.gd` 画面遷移
+- `Title.gd` タイトル（NEW GAME / CONTINUE / CHECK LIST）
+- `Prep.gd` 出撃準備（隊員のレベルとHPを一覧、DEPLOY で開始）
+- `Talk.gd` 会話（1文字送り、タップでスキップ・送り）
+- `Battle.gd` 戦闘（旧 Main.gd）
+- `Maps.gd` autoload / 4マップの地形・敵配置・勝利条件・会話
+- `Save.gd` autoload / `user://save.json` への保存と隊員の引き継ぎ
+
+**4マップと勝利条件**
+
+| # | 名前 | 条件 |
+|---|---|---|
+| 1 | PLAINS | 敵全滅 |
+| 2 | RIVER | 敵将撃破（王冠マーク付き、強化個体） |
+| 3 | FORT | 指定タイル到達（黄色く光る） |
+| 4 | PASS | 6ラウンド生存 |
+
+地形は `Maps.gd` に文字列で定義。`.`草原 `-`道 `~`水 `#`岩 `T`森 `f`花。
+
+**引き継ぎとセーブ**
+
+レベル・EXP・成長したステータスは次のマップへ持ち越す。HPとMPは戦闘前に全回復。
+勝利のたびに `user://save.json` へ保存し、タイトルの CONTINUE で再開できる。
+
+**CHECK画面**はタイトルから開く。項目は `scripts/Check.gd` の `ITEMS`。
+
+## 残っている課題
+
+- 出撃メンバーの選択（現在は全員自動出撃）
+- 日本語表示（Godot標準フォントに日本語グリフが無い）
+- 音
+- `RULE_FEEL.md` の作成

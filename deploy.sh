@@ -14,4 +14,4 @@ git commit -m "$MSG" || true
 git branch -M main
 git remote remove origin 2>/dev/null
 git remote add origin "https://$USER:$TOKEN@github.com/$USER/$REPO.git"
-git push -u origin main
+git push -u origin main --force

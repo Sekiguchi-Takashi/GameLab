@@ -26,6 +26,7 @@ func _ready() -> void:
 	check_n = preload("res://scripts/Check.gd").new()
 	check_n.visible = false
 	add_child(check_n)
+	Sound.bgm("title")
 
 func _show(s: int) -> void:
 	state = s
@@ -37,7 +38,7 @@ func _show(s: int) -> void:
 		battle_n.visible = s == S.BATTLE
 
 func _on_title(what: String) -> void:
-	if what == "NEW GAME":
+	if what == "NEW":
 		Save.new_game()
 		_go_prep()
 	elif what == "CONTINUE":
@@ -59,7 +60,7 @@ func _go_prep() -> void:
 
 func _on_deploy() -> void:
 	var m: Dictionary = Maps.get_map(Save.map_index)
-	talk_n.setup("BATTLE %d  %s" % [Save.map_index + 1, String(m["name"])], m["intro"])
+	talk_n.setup("%s %d  %s" % [Gfx.L("第", "BATTLE"), Save.map_index + 1, Maps.name_of(m)], Maps.intro_of(m))
 	_show(S.TALK_IN)
 
 func _on_talk_done() -> void:
@@ -71,6 +72,7 @@ func _on_talk_done() -> void:
 		_go_prep()
 
 func _start_battle() -> void:
+	Sound.bgm("battle")
 	if battle_n != null:
 		battle_n.queue_free()
 	battle_n = preload("res://scripts/Battle.gd").new()
@@ -82,6 +84,7 @@ func _start_battle() -> void:
 
 func _on_battle_done(win: bool) -> void:
 	if not win:
+		Sound.bgm("title")
 		_show(S.TITLE)
 		return
 	for u in battle_n.units:
@@ -89,7 +92,7 @@ func _on_battle_done(win: bool) -> void:
 		if int(uu["team"]) == 0:
 			Save.store(uu)
 	var m: Dictionary = Maps.get_map(Save.map_index)
-	talk_n.setup("VICTORY", m["outro"])
+	talk_n.setup(Gfx.L("勝利", "VICTORY"), Maps.outro_of(m))
 	_show(S.TALK_OUT)
 
 func _unhandled_input(e: InputEvent) -> void:
@@ -106,6 +109,7 @@ func _unhandled_input(e: InputEvent) -> void:
 		if check_n.tap(p):
 			_show(S.TITLE)
 	elif state == S.END:
+		Sound.bgm("title")
 		_show(S.TITLE)
 
 func _process(_d: float) -> void:
@@ -114,7 +118,7 @@ func _process(_d: float) -> void:
 func _draw() -> void:
 	if state == S.END:
 		draw_rect(Rect2(0.0, 0.0, 640.0, 360.0), Color(0.05, 0.06, 0.09, 1.0))
-		var t := "ALL BATTLES CLEARED"
-		Gfx.text(self, t, Vector2(320.0 - float(Gfx.text_width(t)) * 0.5, 150.0), Pal.c("yellow"))
-		var t2 := "TAP TO RETURN TO TITLE"
-		Gfx.text(self, t2, Vector2(320.0 - float(Gfx.text_width(t2)) * 0.5, 180.0), Pal.c("gray"))
+		var t := Gfx.L("すべての戦いを終えた", "ALL BATTLES CLEARED")
+		Gfx.jtext(self, t, Vector2(320.0 - Gfx.jwidth(t, 18) * 0.5, 146.0), Pal.c("yellow"), 18)
+		var t2 := Gfx.L("画面をタップでタイトルへ", "TAP TO RETURN TO TITLE")
+		Gfx.jtext(self, t2, Vector2(320.0 - Gfx.jwidth(t2, 13) * 0.5, 182.0), Pal.c("gray"), 13)

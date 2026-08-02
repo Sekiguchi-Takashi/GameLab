@@ -61,12 +61,59 @@ const FONT := {
 	" ": [0, 0, 0, 0, 0, 0, 0, 0],
 }
 
+var jfont: FontFile = null
+var jfont_path := "NONE"
 var _atlas: ImageTexture
 var _order := {}
 var _cache := {}
 
 func _ready() -> void:
 	_build_atlas()
+	_load_jfont()
+
+const JPATHS := [
+	"/system/fonts/NotoSansCJK-Regular.ttc",
+	"/system/fonts/NotoSansCJKjp-Regular.otf",
+	"/system/fonts/NotoSansJP-Regular.otf",
+	"/system/fonts/NotoSansJP-Regular.ttf",
+	"/system/fonts/DroidSansJapanese.ttf",
+	"/system/fonts/DroidSansFallback.ttf",
+	"/system/fonts/NotoSerifCJK-Regular.ttc",
+	"/system/fonts/SamsungKorean.ttf",
+]
+
+func _load_jfont() -> void:
+	for p in JPATHS:
+		var path: String = p
+		if not FileAccess.file_exists(path):
+			continue
+		var f := FontFile.new()
+		var err: int = f.load_dynamic_font(path)
+		if err == OK:
+			jfont = f
+			jfont_path = path.get_file()
+			return
+	jfont = null
+	jfont_path = "NONE"
+
+func has_jp() -> bool:
+	return jfont != null
+
+func L(ja: String, en: String) -> String:
+	if jfont != null:
+		return ja
+	return en
+
+func jwidth(s: String, size: int = 14) -> float:
+	if jfont != null:
+		return jfont.get_string_size(s, HORIZONTAL_ALIGNMENT_LEFT, -1.0, size).x
+	return float(text_width(s))
+
+func jtext(ci: CanvasItem, s: String, pos: Vector2, col: Color, size: int = 14) -> void:
+	if jfont != null:
+		ci.draw_string(jfont, Vector2(pos.x, pos.y + float(size) * 0.82), s, HORIZONTAL_ALIGNMENT_LEFT, -1.0, size, col)
+	else:
+		text(ci, s, pos, col)
 
 func _build_atlas() -> void:
 	var keys: Array = FONT.keys()

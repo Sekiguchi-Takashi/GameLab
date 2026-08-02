@@ -19,6 +19,7 @@ func _full() -> bool:
 	return shown >= float(String(lines[page]).length())
 
 func tap(_p: Vector2) -> void:
+	Sound.play("select")
 	if not _full():
 		shown = 9999.0
 		return
@@ -33,7 +34,7 @@ func _process(d: float) -> void:
 
 func _draw() -> void:
 	draw_rect(Rect2(0.0, 0.0, 640.0, 360.0), Color(0.04, 0.05, 0.07, 1.0))
-	Gfx.text(self, title, Vector2(20.0, 24.0), Pal.c("cyan"))
+	Gfx.jtext(self, title, Vector2(20.0, 20.0), Pal.c("cyan"), 17)
 	var wx := 20.0
 	var wy := 220.0
 	var ww := 600.0
@@ -49,10 +50,10 @@ func _draw() -> void:
 			n = clampi(int(shown), 0, s.length())
 		elif not _full():
 			n = 0
-		Gfx.text(self, s.substr(0, n), Vector2(wx + 20.0, y), Pal.c("white"))
-		y += 22.0
+		Gfx.jtext(self, s.substr(0, n), Vector2(wx + 20.0, y), Pal.c("white"), 16)
+		y += 26.0
 	if _full() and int(Time.get_ticks_msec() / 380) % 2 == 0:
 		var px := wx + ww - 24.0
 		var py := wy + wh - 18.0
 		draw_colored_polygon(PackedVector2Array([Vector2(px, py), Vector2(px + 10.0, py), Vector2(px + 5.0, py + 8.0)]), Pal.c("yellow"))
-	Gfx.text(self, "TAP TO CONTINUE", Vector2(20.0, 336.0), Pal.c("dgray"))
+	Gfx.jtext(self, Gfx.L("タップで進む", "TAP TO CONTINUE"), Vector2(20.0, 330.0), Pal.c("dgray"), 13)

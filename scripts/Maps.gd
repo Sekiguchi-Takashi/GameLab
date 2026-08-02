@@ -108,6 +108,53 @@ const MAPS := [
 	},
 ]
 
+
+const JA := {
+	"PLAINS": {
+		"name": "平原",
+		"win": "敵の全滅",
+		"intro": ["野盗の一団が街道をふさいでいる。", "残らず片づけろ。"],
+		"outro": ["道が開けた。", "だが東の空に煙が上がっている。"],
+	},
+	"RIVER": {
+		"name": "渡河",
+		"win": "敵将を討つ",
+		"intro": ["敵の隊長は川の向こうで待っている。", "橋は三つ。隊長を討てば残りは散る。"],
+		"outro": ["隊長が倒れた。", "丘の上で狼煙が上がる。"],
+	},
+	"FORT": {
+		"name": "砦",
+		"win": "指定地点へ到達",
+		"intro": ["内庭に門の鍵がある。", "花のマスへ到達せよ。戦う必要はない。"],
+		"outro": ["鍵は手に入れた。", "この先は峠だ。"],
+	},
+	"PASS": {
+		"name": "峠",
+		"win": "六ラウンド生存",
+		"intro": ["本隊が通過するまで峠を守れ。", "六ラウンド。それだけでいい。"],
+		"outro": ["本隊は抜けた。", "これで終わりだ。"],
+	},
+}
+
+func name_of(m: Dictionary) -> String:
+	var k: String = m["name"]
+	var j: Dictionary = JA[k]
+	return Gfx.L(String(j["name"]), k)
+
+func intro_of(m: Dictionary) -> Array:
+	var k: String = m["name"]
+	var j: Dictionary = JA[k]
+	if Gfx.has_jp():
+		return j["intro"]
+	return m["intro"]
+
+func outro_of(m: Dictionary) -> Array:
+	var k: String = m["name"]
+	var j: Dictionary = JA[k]
+	if Gfx.has_jp():
+		return j["outro"]
+	return m["outro"]
+
 func count() -> int:
 	return MAPS.size()
 
@@ -115,6 +162,9 @@ func get_map(i: int) -> Dictionary:
 	return MAPS[clampi(i, 0, MAPS.size() - 1)]
 
 func win_text(m: Dictionary) -> String:
+	if Gfx.has_jp():
+		var j: Dictionary = JA[String(m["name"])]
+		return String(j["win"])
 	var w: String = m["win"]
 	if w == "ROUT":
 		return "DEFEAT ALL"

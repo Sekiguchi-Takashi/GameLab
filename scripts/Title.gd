@@ -3,20 +3,38 @@ extends Node2D
 signal pick(what: String)
 
 func _btn(i: int) -> Rect2:
-	return Rect2(200.0, 160.0 + float(i) * 46.0, 240.0, 36.0)
+	return Rect2(200.0, 150.0 + float(i) * 42.0, 240.0, 32.0)
 
 func _labels() -> Array:
-	var out: Array = ["NEW GAME"]
+	var out: Array = [Gfx.L("はじめから", "NEW GAME")]
 	if Save.has_save():
-		out.append("CONTINUE")
-	out.append("CHECK LIST")
+		out.append(Gfx.L("つづきから", "CONTINUE"))
+	out.append(Gfx.L("確認リスト", "CHECK LIST"))
+	out.append(Gfx.L("音 " + _snd(), "SOUND " + _snd()))
 	return out
+
+func _snd() -> String:
+	if Sound.enabled:
+		return "ON"
+	return "OFF"
 
 func tap(p: Vector2) -> void:
 	var l := _labels()
 	for i in l.size():
 		if _btn(i).has_point(p):
-			pick.emit(String(l[i]))
+			Sound.play("confirm")
+			if i == l.size() - 1:
+				Sound.toggle()
+				if Sound.enabled:
+					Sound.bgm("title")
+				return
+			if i == l.size() - 2:
+				pick.emit("CHECK")
+				return
+			if i == 0:
+				pick.emit("NEW")
+			else:
+				pick.emit("CONTINUE")
 			return
 
 func _process(_d: float) -> void:
@@ -27,10 +45,11 @@ func _draw() -> void:
 	for i in 12:
 		var y := 40.0 + float(i) * 4.0
 		draw_rect(Rect2(0.0, y, 640.0, 2.0), Color(0.10, 0.14, 0.22, 1.0 - float(i) * 0.07))
-	var t := "GAMELAB TACTICS"
-	Gfx.text(self, t, Vector2(320.0 - float(Gfx.text_width(t)) * 0.5, 76.0), Pal.c("white"))
-	var sub := "A SMALL WAR IN FOUR BATTLES"
-	Gfx.text(self, sub, Vector2(320.0 - float(Gfx.text_width(sub)) * 0.5, 96.0), Pal.c("gray"))
+	var t := Gfx.L("四つの戦い", "GAMELAB TACTICS")
+	Gfx.jtext(self, t, Vector2(320.0 - Gfx.jwidth(t, 22) * 0.5, 62.0), Pal.c("white"), 22)
+	var sub := Gfx.L("小さな戦記", "A SMALL WAR IN FOUR BATTLES")
+	Gfx.jtext(self, sub, Vector2(320.0 - Gfx.jwidth(sub, 13) * 0.5, 92.0), Pal.c("gray"), 13)
+	Gfx.text(self, "FONT " + Gfx.jfont_path, Vector2(6.0, 344.0), Pal.c("dgray"))
 	var kn: Texture2D = Gfx.art("KNIGHT0")
 	draw_texture_rect_region(kn, Rect2(96.0, 150.0, 96.0, 96.0), Rect2(0.0, 0.0, 48.0, 48.0))
 	var orc: Texture2D = Gfx.art_v("ORC0", false, true)
@@ -41,4 +60,4 @@ func _draw() -> void:
 		draw_rect(b, Pal.c("panel"))
 		draw_rect(b, Pal.c("line"), false, 2.0)
 		var s: String = l[i]
-		Gfx.text(self, s, Vector2(b.position.x + (b.size.x - float(Gfx.text_width(s))) * 0.5, b.position.y + 14.0), Pal.c("white"))
+		Gfx.jtext(self, s, Vector2(b.position.x + (b.size.x - Gfx.jwidth(s, 15)) * 0.5, b.position.y + 8.0), Pal.c("white"), 15)

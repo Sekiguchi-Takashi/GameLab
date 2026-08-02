@@ -18,6 +18,24 @@ const SKILL := {
 	"HEAL": {"cost": 1, "rng": 1, "text": "RESTORE HP OF AN ALLY"},
 }
 
+const JA_NAME := {
+	"KNIGHT": "騎士", "LANCER": "槍兵", "ARCHER": "弓兵", "MAGE": "魔道士",
+	"CLERIC": "僧侶", "ORC": "野盗", "WOLF": "狼",
+}
+
+const JA_SKILL := {
+	"GUARD": "防御", "PIERCE": "貫き", "SNIPE": "狙撃", "BLAST": "爆炎", "HEAL": "治癒",
+}
+
+func label(kind: String) -> String:
+	var st: Dictionary = STATS[kind]
+	return Gfx.L(String(JA_NAME[kind]), String(st["label"]))
+
+func skill_label(sk: String) -> String:
+	if sk == "":
+		return ""
+	return Gfx.L(String(JA_SKILL[sk]), sk)
+
 func make(kind: String, team: int, x: int, y: int) -> Dictionary:
 	var s: Dictionary = STATS[kind]
 	return {

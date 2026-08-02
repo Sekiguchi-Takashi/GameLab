@@ -16,6 +16,7 @@ Gfx="*res://scripts/Gfx.gd"
 Units="*res://scripts/Units.gd"
 Maps="*res://scripts/Maps.gd"
 Save="*res://scripts/Save.gd"
+Sound="*res://scripts/Sound.gd"
 
 [display]
 

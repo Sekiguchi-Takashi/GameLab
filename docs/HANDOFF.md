@@ -41,7 +41,7 @@ bash ~/GameLab/deploy.sh "コメント"
 push すると GitHub Actions が走り、Releases に `build-<番号>` として APK が出る。
 **エラーの一次発見者はClaude。** ユーザーに渡るのはビルドが通ったAPKだけ。
 
-## 現在のゲーム内容（v3.0）
+## 現在のゲーム内容（v3.2）
 
 タクティクスオウガ型SRPGの土台。
 
@@ -148,3 +148,34 @@ TITLE -> PREP -> TALK(intro) -> BATTLE -> TALK(outro) -> PREP(next) ... -> END
 - 日本語表示（Godot標準フォントに日本語グリフが無い）
 - 音
 - `RULE_FEEL.md` の作成
+
+## v3.2 で追加（日本語 + 音）
+
+### 日本語表示
+
+`Gfx.gd` が起動時にAndroidのシステムフォントを探して読み込む（`/system/fonts/NotoSansCJK-Regular.ttc` など8候補）。
+見つかれば日本語、見つからなければ従来の英字ビットマップフォントにフォールバックする。**追加ファイルの同梱なし。**
+
+- `Gfx.has_jp()` — 日本語フォントが使えるか
+- `Gfx.L(ja, en)` — 使えれば日本語、なければ英語を返す
+- `Gfx.jtext(ci, s, pos, col, size)` — 日本語描画。フォント無しなら英字ビットマップにフォールバック
+- `Gfx.jwidth(s, size)` — 文字幅
+
+日本語文字列は各所に `Gfx.L("攻撃", "ATTACK")` の形で埋め込む。マップ名・目的・会話は `Maps.JA`、
+クラス名・技名は `Units.JA_NAME` / `Units.JA_SKILL` にまとめてある。
+
+タイトル左下に読み込んだフォント名（または `NONE`）を表示している。
+
+### 音
+
+`Sound.gd` autoload。**素材ファイルなし、全て波形をコードで生成**する。
+
+- `AudioStreamWAV` を実行時に組み立ててキャッシュ
+- 効果音8種: select / confirm / cancel / slash / hit / heal / down / level
+- BGM4曲: title / battle / win / lose。矩形波（主旋律）＋三角波（ベース）＋ノイズ（打楽器）の3声
+- 曲データは `Sound.SONGS` に16分音符単位の配列で定義
+- タイトルの `音 ON/OFF` で切替
+
+## 未確定
+
+- 日本語フォントが端末に無い場合は英語表示のまま。その場合はフォント同梱に切り替える判断が要る

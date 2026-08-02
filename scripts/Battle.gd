@@ -80,6 +80,7 @@ func _setup() -> void:
 			eu["atk"] = int(eu["atk"]) + 3
 			eu["def"] = int(eu["def"]) + 2
 		_push(eu, 1)
+	_validate()
 	queue.clear()
 	anim = {}
 	over = false
@@ -101,6 +102,74 @@ func _push(u: Dictionary, team: int) -> void:
 	if not u.has("boss"):
 		u["boss"] = false
 	units.append(u)
+
+func _free_tile(x: int, y: int, self_i: int) -> bool:
+	if not board.inside(x, y):
+		return false
+	if board.cost(x, y) >= 99:
+		return false
+	for i in units.size():
+		if i == self_i:
+			continue
+		var o: Dictionary = units[i]
+		if int(o["x"]) == x and int(o["y"]) == y:
+			return false
+	return true
+
+func _validate() -> void:
+	for i in units.size():
+		var u: Dictionary = units[i]
+		if _free_tile(int(u["x"]), int(u["y"]), i):
+			continue
+		var found := false
+		for r in range(1, 8):
+			for dy in range(-r, r + 1):
+				for dx in range(-r, r + 1):
+					if absi(dx) != r and absi(dy) != r:
+						continue
+					var nx: int = int(u["x"]) + dx
+					var ny: int = int(u["y"]) + dy
+					if _free_tile(nx, ny, i):
+						u["x"] = nx
+						u["y"] = ny
+						u["px"] = Vector2(float(nx) * TS, float(ny) * TS)
+						found = true
+						break
+				if found:
+					break
+			if found:
+				break
+	var start := Vector2i(-1, -1)
+	for u2 in units:
+		var uu: Dictionary = u2
+		if int(uu["team"]) == 0:
+			start = Vector2i(int(uu["x"]), int(uu["y"]))
+			break
+	if start.x < 0:
+		return
+	var seen: Dictionary = {start: true}
+	var open: Array = [start]
+	while open.size() > 0:
+		var p: Vector2i = open.pop_back()
+		for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+			var np: Vector2i = p + d
+			if seen.has(np):
+				continue
+			if not board.inside(np.x, np.y):
+				continue
+			if board.cost(np.x, np.y) >= 99:
+				continue
+			seen[np] = true
+			open.append(np)
+	var lost := 0
+	for u3 in units:
+		var uu3: Dictionary = u3
+		if int(uu3["team"]) != 1:
+			continue
+		if not seen.has(Vector2i(int(uu3["x"]), int(uu3["y"]))):
+			lost += 1
+	if lost > 0:
+		msg = "MAP WARNING %d FOES CUT OFF" % lost
 
 func _banner(t: String) -> void:
 	banner = t

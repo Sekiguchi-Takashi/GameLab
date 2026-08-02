@@ -22,7 +22,7 @@ func read_trace() -> void:
 	var parts: PackedStringArray = t.strip_edges().split("\n")
 	var out: Array = []
 	var n: int = parts.size()
-	for i in range(maxi(n - 4, 0), n):
+	for i in range(maxi(n - 6, 0), n):
 		out.append(String(parts[i]))
 	last_trace = " > ".join(out)
 

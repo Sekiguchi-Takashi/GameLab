@@ -46,6 +46,7 @@ var ai_t := 0.0
 
 var item_open := false
 var cur_item := ""
+var over_t := 0.0
 var banner := ""
 var banner_t := 0.0
 
@@ -90,6 +91,14 @@ func _setup() -> void:
 	over = false
 	result_sent = false
 	rnd = 0
+	var ws: Vector2 = board.world_size()
+	cam = (ws - VIEW.size) * 0.5
+	_clamp_cam()
+	q_wait(0.5)
+	q_cam(Vector2(0.0, 0.0))
+	q_wait(0.25)
+	q_cam(ws - VIEW.size)
+	q_wait(0.25)
 	_begin_round()
 	_banner(Maps.name_of(mapdef))
 
@@ -103,6 +112,7 @@ func _push(u: Dictionary, team: int) -> void:
 	u["flash"] = 0.0
 	u["fade"] = 1.0
 	u["nudge"] = Vector2.ZERO
+	u["hpv"] = float(u["hp"])
 	if not u.has("boss"):
 		u["boss"] = false
 	units.append(u)
@@ -235,7 +245,12 @@ func _terrain_tick() -> void:
 		var delta: int = int(u["hp"]) - before
 		if delta != 0:
 			u["flash"] = 0.22
-			fx.hit(Vector2(u["px"]), absi(delta), false)
+			if delta > 0:
+				fx.spawn("heal", Vector2(u["px"]), Vector2(u["px"]), Pal.c("lgreen"))
+				fx.heal_pop(Vector2(u["px"]), delta)
+			else:
+				fx.spawn("magic", Vector2(u["px"]), Vector2(u["px"]), Pal.c("purple"))
+				fx.hit(Vector2(u["px"]), absi(delta), false)
 		if int(u["hp"]) <= 0:
 			u["fade"] = 0.0
 
@@ -329,6 +344,7 @@ func _check_over() -> void:
 
 func _finish(win: bool) -> void:
 	over = true
+	over_t = 0.0
 	if win:
 		Sound.bgm("win")
 		_banner(Gfx.L("任務達成", "MISSION CLEAR"))
@@ -393,6 +409,42 @@ func path_to(goal: Vector2i) -> Array:
 		out.push_front(cur)
 		guard += 1
 	return out
+
+func _fx_kind(i: int) -> String:
+	var kind: String = String(units[i]["kind"])
+	if Units.WTYPE.has(kind):
+		var t: String = String(Units.WTYPE[kind])
+		if t == "SWORD":
+			return "slash"
+		if t == "SPEAR":
+			return "thrust"
+		if t == "BOW":
+			return "arrow"
+		if t == "ROD":
+			return "magic"
+		return "holy"
+	if kind == "BOWMAN":
+		return "arrow"
+	if kind == "SHAMAN":
+		return "magic"
+	if kind == "WOLF":
+		return "thrust"
+	return "slash"
+
+func _fx_col(i: int) -> Color:
+	var kind: String = String(units[i]["kind"])
+	if kind == "MAGE" or kind == "ARCHMAGE" or kind == "SHAMAN":
+		return Pal.c("purple")
+	if kind == "CLERIC" or kind == "BISHOP":
+		return Pal.c("yellow")
+	if int(units[i]["team"]) == 1:
+		return Pal.c("orange")
+	return Pal.c("white")
+
+func _play_fx(a: int, b: int, kind: String) -> void:
+	var pa: Vector2 = Vector2(units[a]["px"])
+	var pb: Vector2 = Vector2(units[b]["px"])
+	fx.spawn(kind, pa, pb, _fx_col(a))
 
 func eff_rng(i: int) -> int:
 	var u: Dictionary = units[i]
@@ -589,6 +641,7 @@ func _step_anim(dt: float) -> void:
 		if t >= LUNGE * 0.32 and not bool(anim["done"]):
 			anim["done"] = true
 			_face_to(ai, bi)
+			_play_fx(ai, bi, _fx_kind(ai))
 			_damage(ai, bi, float(anim["m"]))
 			if bool(anim["c"]) and int(ub["hp"]) > 0 and dist(ai, bi) <= eff_rng(bi):
 				q_attack(bi, ai, 1.0, false)
@@ -607,6 +660,7 @@ func _step_anim(dt: float) -> void:
 				var jj: int = int(j)
 				if int(units[jj]["hp"]) > 0:
 					_face_to(a2, jj)
+					_play_fx(a2, jj, _fx_kind(a2))
 					_damage(a2, jj, float(anim["m"]))
 		if p4 >= 1.0:
 			anim = {}
@@ -622,7 +676,8 @@ func _step_anim(dt: float) -> void:
 			var before: int = int(uh["hp"])
 			uh["hp"] = mini(before + amt, int(uh["mhp"]))
 			uh["flash"] = 0.22
-			fx.hit(Vector2(uh["px"]), int(uh["hp"]) - before, false)
+			fx.spawn("heal", Vector2(uh["px"]), Vector2(uh["px"]), Pal.c("lgreen"))
+			fx.heal_pop(Vector2(uh["px"]), int(uh["hp"]) - before)
 			msg = "%s %d" % [Gfx.L("回復", "HEAL"), int(uh["hp"]) - before]
 			Sound.play("heal")
 			_gain_exp(ha, 14)
@@ -878,7 +933,8 @@ func _use_item(tgt: int) -> void:
 		var before: int = int(u["hp"])
 		u["hp"] = mini(before + int(info["power"]), int(u["mhp"]))
 		u["flash"] = 0.22
-		fx.hit(Vector2(u["px"]), int(u["hp"]) - before, false)
+		fx.spawn("heal", Vector2(u["px"]), Vector2(u["px"]), Pal.c("lgreen"))
+		fx.heal_pop(Vector2(u["px"]), int(u["hp"]) - before)
 		Sound.play("heal")
 		msg = "%s %d" % [Gfx.L("回復", "HEAL"), int(u["hp"]) - before]
 	elif k == "NUT":
@@ -888,6 +944,7 @@ func _use_item(tgt: int) -> void:
 		msg = Gfx.L("MP回復", "MP UP")
 	else:
 		var dmg: int = int(info["power"])
+		fx.spawn("arrow", Vector2(units[active]["px"]), Vector2(u["px"]), Pal.c("gray"))
 		u["hp"] = maxi(int(u["hp"]) - dmg, 0)
 		u["flash"] = 0.22
 		fx.hit(Vector2(u["px"]), dmg, false)
@@ -914,6 +971,7 @@ func _open_skill() -> void:
 	if sk == "GUARD":
 		u["guard"] = true
 		u["mp"] = int(u["mp"]) - 1
+		fx.spawn("guard", Vector2(u["px"]), Vector2(u["px"]), Pal.c("cyan"))
 		_banner(Gfx.L("防御態勢", "GUARD UP"))
 		_end_unit()
 		return
@@ -971,10 +1029,13 @@ func _process(d: float) -> void:
 	var dt: float = fx.tick(d)
 	if banner_t > 0.0:
 		banner_t = maxf(banner_t - d, 0.0)
+	if over:
+		over_t += d
 	for u in units:
 		var uu: Dictionary = u
 		uu["flash"] = maxf(float(uu["flash"]) - d, 0.0)
 		uu["nudge"] = Vector2(uu["nudge"]).move_toward(Vector2.ZERO, 60.0 * d)
+		uu["hpv"] = move_toward(float(uu["hpv"]), float(uu["hp"]), maxf(float(uu["mhp"]) * 1.6, 12.0) * d)
 	if dt > 0.0:
 		_step_anim(dt)
 		if not busy() and not over and active >= 0:
@@ -1001,9 +1062,11 @@ func _draw() -> void:
 	board.draw_map(self, cam, VIEW)
 	_draw_overlay()
 	_draw_units()
+	fx.draw_efx(self, cam, VIEW)
 	fx.draw_pops(self, cam, VIEW)
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	fx.draw_flash(self, VIEW)
+	_draw_result()
 	_draw_hud()
 	_draw_items()
 	_draw_banner()
@@ -1090,7 +1153,12 @@ func _draw_units() -> void:
 			draw_texture_rect_region(wt, dst, src, Color(1, 1, 1, float(u["flash"]) / 0.22 * 0.85))
 		if int(u["hp"]) > 0:
 			var ratio: float = float(u["hp"]) / float(u["mhp"])
-			draw_rect(Rect2(sp.x + 3.0, sp.y + 27.0, 26.0, 4.0), Color(0, 0, 0, 0.7))
+			var vr: float = clampf(float(u["hpv"]) / float(u["mhp"]), 0.0, 1.0)
+			draw_rect(Rect2(sp.x + 3.0, sp.y + 27.0, 26.0, 4.0), Color(0, 0, 0, 0.75))
+			if vr > ratio:
+				draw_rect(Rect2(sp.x + 4.0, sp.y + 28.0, 24.0 * vr, 2.0), Pal.c("red"))
+			else:
+				draw_rect(Rect2(sp.x + 4.0, sp.y + 28.0, 24.0 * vr, 2.0), Pal.c("lgreen"))
 			draw_rect(Rect2(sp.x + 4.0, sp.y + 28.0, 24.0 * ratio, 2.0), Pal.team(int(u["team"])))
 			if bool(u["guard"]):
 				draw_rect(Rect2(sp.x + 2.0, sp.y - 2.0, 6.0, 6.0), Pal.c("cyan"))
@@ -1110,6 +1178,8 @@ func _draw_units() -> void:
 func _panel(r: Rect2) -> void:
 	draw_rect(r, Pal.c("panel"))
 	draw_rect(r, Pal.c("line"), false, 1.0)
+	draw_rect(Rect2(r.position.x + 2.0, r.position.y + 2.0, r.size.x - 4.0, 1.0), Color(1, 1, 1, 0.10))
+	draw_rect(Rect2(r.position.x, r.position.y + r.size.y - 1.0, r.size.x, 1.0), Color(0, 0, 0, 0.35))
 
 func _draw_hud() -> void:
 	_panel(Rect2(0.0, 0.0, 640.0, 20.0))
@@ -1166,12 +1236,48 @@ func _draw_hud() -> void:
 			if i == 1 and (int(units[active]["mp"]) <= 0 or _skill_of(active) == ""):
 				lc = Pal.c("dgray")
 			var s2: String = lbls[i]
+			var hot := false
+			if i == 0 and sub == Sub.TARGET:
+				hot = true
+			if i == 1 and sub == Sub.SKILL:
+				hot = true
+			if i == 2 and (item_open or sub == Sub.ITEM):
+				hot = true
+			if hot:
+				var g: float = 0.5 + 0.5 * sin(float(Time.get_ticks_msec()) * 0.008)
+				draw_rect(b, Color(0.95, 0.80, 0.25, 0.18 + 0.22 * g))
+				draw_rect(b, Color(0.98, 0.86, 0.35, 0.5 + 0.5 * g), false, 2.0)
 			Gfx.jtext(self, s2, Vector2(b.position.x + (b.size.x - Gfx.jwidth(s2, 16)) * 0.5, b.position.y + 6.0), lc, 16)
 	elif over:
 		var b2 := _btn(3)
 		_panel(b2)
 		var nx := Gfx.L("次へ", "NEXT")
 		Gfx.jtext(self, nx, Vector2(b2.position.x + (b2.size.x - Gfx.jwidth(nx, 16)) * 0.5, b2.position.y + 6.0), Pal.c("white"), 16)
+
+func _draw_result() -> void:
+	if not over:
+		return
+	var win := String(msg) == "CLEAR"
+	if win:
+		var u: float = clampf(over_t / 0.55, 0.0, 1.0)
+		var h: float = VIEW.size.y * 0.5 * u
+		draw_rect(Rect2(VIEW.position.x, VIEW.position.y, VIEW.size.x, h), Color(0.06, 0.10, 0.18, 0.80))
+		draw_rect(Rect2(VIEW.position.x, VIEW.end.y - h, VIEW.size.x, h), Color(0.06, 0.10, 0.18, 0.80))
+		if u >= 1.0:
+			var g: float = clampf((over_t - 0.55) / 0.5, 0.0, 1.0)
+			var n: int = 0
+			for uu in units:
+				var d2: Dictionary = uu
+				if int(d2["team"]) != 0 or int(d2["hp"]) <= 0:
+					continue
+				var tx: float = 90.0 + float(n) * 96.0
+				var ty: float = 150.0 - 20.0 * clampf(g * 3.0 - float(n) * 0.4, 0.0, 1.0)
+				var tex: Texture2D = Gfx.art_v("%s0" % String(d2["kind"]), false, false)
+				draw_texture_rect_region(tex, Rect2(tx, ty, 64.0, 64.0), Rect2(0.0, 0.0, 48.0, 48.0), Color(1, 1, 1, clampf(g * 3.0 - float(n) * 0.4, 0.0, 1.0)))
+				n += 1
+	else:
+		var u2: float = clampf(over_t / 1.2, 0.0, 1.0)
+		draw_rect(VIEW, Color(0.0, 0.0, 0.0, 0.72 * u2))
 
 func _draw_items() -> void:
 	if not item_open:

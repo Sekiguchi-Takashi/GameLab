@@ -626,17 +626,16 @@ func _draw_units() -> void:
 		elif int(Time.get_ticks_msec() / 520) % 2 == 1:
 			frame = 1
 		var nm := "%s%d" % [u["kind"], frame]
-		var tex: Texture2D = Gfx.art(nm)
+		var flip: bool = int(u["face"]) < 0
+		var tex: Texture2D = Gfx.art_v(nm, false, flip)
 		var dst := Rect2(sp.x - 8.0, sp.y - 16.0, 48.0, 48.0)
 		var src := Rect2(0.0, 0.0, 48.0, 48.0)
-		if int(u["face"]) < 0:
-			src = Rect2(48.0, 0.0, -48.0, 48.0)
 		var tint := Color(1, 1, 1, float(u["fade"]))
 		if bool(u["done"]) and int(u["hp"]) > 0:
 			tint = Color(0.56, 0.62, 0.72, float(u["fade"]))
 		draw_texture_rect_region(tex, dst, src, tint)
 		if float(u["flash"]) > 0.0:
-			var wt: Texture2D = Gfx.art_white(nm)
+			var wt: Texture2D = Gfx.art_v(nm, true, flip)
 			draw_texture_rect_region(wt, dst, src, Color(1, 1, 1, float(u["flash"]) / 0.22 * 0.85))
 		if int(u["hp"]) > 0:
 			var ratio: float = float(u["hp"]) / float(u["mhp"])

@@ -156,7 +156,17 @@ func drop(key: String) -> void:
 		_cache.erase(key)
 
 func art(name: String) -> ImageTexture:
-	var key := "art:" + name
+	return art_v(name, false, false)
+
+func art_white(name: String) -> ImageTexture:
+	return art_v(name, true, false)
+
+func art_v(name: String, white: bool, flip: bool) -> ImageTexture:
+	var key := "a:" + name
+	if white:
+		key += ":w"
+	if flip:
+		key += ":f"
 	if _cache.has(key):
 		return _cache[key]
 	var e: Dictionary = Art.A[name]
@@ -165,39 +175,25 @@ func art(name: String) -> ImageTexture:
 	for h in hexes:
 		cols.append(Color.html(String(h)))
 	var rows: Array = e["a"]
-	var h2: int = rows.size()
-	var w: int = String(rows[0]).length()
-	var img := Image.create(w, h2, false, Image.FORMAT_RGBA8)
+	var hh: int = rows.size()
+	var ww: int = String(rows[0]).length()
+	var img := Image.create(ww, hh, false, Image.FORMAT_RGBA8)
 	img.fill(Color(0, 0, 0, 0))
-	for y in h2:
+	for y in hh:
 		var line: String = rows[y]
-		for x in w:
-			var c: String = line[x]
-			if c == ".":
+		for x in ww:
+			var ch: String = line[x]
+			if ch == ".":
 				continue
-			var i: int = Art.CHARS.find(c)
-			if i >= 0 and i < cols.size():
-				img.set_pixel(x, y, cols[i])
-	var t := ImageTexture.create_from_image(img)
-	_cache[key] = t
-	return t
-
-func art_white(name: String) -> ImageTexture:
-	var key := "white:" + name
-	if _cache.has(key):
-		return _cache[key]
-	var e: Dictionary = Art.A[name]
-	var rows: Array = e["a"]
-	var h2: int = rows.size()
-	var w: int = String(rows[0]).length()
-	var img := Image.create(w, h2, false, Image.FORMAT_RGBA8)
-	img.fill(Color(0, 0, 0, 0))
-	for y in h2:
-		var line: String = rows[y]
-		for x in w:
-			if line[x] == ".":
-				continue
-			img.set_pixel(x, y, Color(1, 1, 1, 1))
+			var dx: int = x
+			if flip:
+				dx = ww - 1 - x
+			if white:
+				img.set_pixel(dx, y, Color(1, 1, 1, 1))
+			else:
+				var ci: int = Art.CHARS.find(ch)
+				if ci >= 0 and ci < cols.size():
+					img.set_pixel(dx, y, cols[ci])
 	var t := ImageTexture.create_from_image(img)
 	_cache[key] = t
 	return t

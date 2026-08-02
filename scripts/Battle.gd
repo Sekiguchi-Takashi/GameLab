@@ -77,6 +77,15 @@ func _setup() -> void:
 	for e in foes:
 		var ee: Array = e
 		var eu: Dictionary = Units.make(String(ee[0]), 1, int(ee[1]), int(ee[2]))
+		var lv := 1
+		if ee.size() > 4:
+			lv = maxi(int(ee[4]), 1)
+		if lv > 1:
+			eu["lv"] = lv
+			eu["mhp"] = int(eu["mhp"]) + (lv - 1) * 4
+			eu["hp"] = int(eu["mhp"])
+			eu["atk"] = int(eu["atk"]) + (lv - 1)
+			eu["def"] = int(eu["def"]) + int((lv - 1) / 2)
 		if int(ee[3]) == 1:
 			eu["boss"] = true
 			eu["hp"] = int(eu["hp"]) + 14

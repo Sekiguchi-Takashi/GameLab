@@ -68,6 +68,60 @@ const JA_SKILL := {
 	"GUARD": "防御", "PIERCE": "貫き", "SNIPE": "狙撃", "BLAST": "爆炎", "HEAL": "治癒",
 }
 
+const WTYPE := {
+	"KNIGHT": "SWORD", "PALADIN": "SWORD",
+	"LANCER": "SPEAR", "DRAGOON": "SPEAR",
+	"ARCHER": "BOW", "SNIPER": "BOW",
+	"MAGE": "ROD", "ARCHMAGE": "ROD",
+	"CLERIC": "BOOK", "BISHOP": "BOOK",
+}
+
+const WEAPONS := {
+	"SWORD1": {"type": "SWORD", "atk": 1, "rng": 0, "ja": "銅の剣", "en": "BRONZE SWORD"},
+	"SWORD2": {"type": "SWORD", "atk": 3, "rng": 0, "ja": "鋼の剣", "en": "STEEL SWORD"},
+	"SWORD3": {"type": "SWORD", "atk": 6, "rng": 0, "ja": "銀の剣", "en": "SILVER SWORD"},
+	"SPEAR1": {"type": "SPEAR", "atk": 1, "rng": 0, "ja": "木の槍", "en": "WOOD SPEAR"},
+	"SPEAR2": {"type": "SPEAR", "atk": 3, "rng": 0, "ja": "鋼の槍", "en": "STEEL SPEAR"},
+	"SPEAR3": {"type": "SPEAR", "atk": 4, "rng": 1, "ja": "長柄の槍", "en": "LONG SPEAR"},
+	"BOW1": {"type": "BOW", "atk": 1, "rng": 0, "ja": "狩弓", "en": "HUNT BOW"},
+	"BOW2": {"type": "BOW", "atk": 3, "rng": 0, "ja": "戦弓", "en": "WAR BOW"},
+	"BOW3": {"type": "BOW", "atk": 3, "rng": 1, "ja": "長弓", "en": "LONG BOW"},
+	"ROD1": {"type": "ROD", "atk": 1, "rng": 0, "ja": "樫の杖", "en": "OAK ROD"},
+	"ROD2": {"type": "ROD", "atk": 4, "rng": 0, "ja": "紫水晶の杖", "en": "AMETHYST ROD"},
+	"ROD3": {"type": "ROD", "atk": 7, "rng": 0, "ja": "賢者の杖", "en": "SAGE ROD"},
+	"BOOK1": {"type": "BOOK", "atk": 1, "rng": 0, "ja": "祈祷書", "en": "PRAYER BOOK"},
+	"BOOK2": {"type": "BOOK", "atk": 3, "rng": 0, "ja": "聖典", "en": "HOLY BOOK"},
+	"BOOK3": {"type": "BOOK", "atk": 3, "rng": 1, "ja": "予言書", "en": "ORACLE BOOK"},
+}
+
+const DROPS := ["SWORD2", "SPEAR2", "BOW2", "ROD2", "BOOK2", "SWORD3", "SPEAR3", "BOW3", "ROD3", "BOOK3"]
+
+func weapon_label(k: String) -> String:
+	if k == "" or not WEAPONS.has(k):
+		return Gfx.L("なし", "NONE")
+	var w: Dictionary = WEAPONS[k]
+	return Gfx.L(String(w["ja"]), String(w["en"]))
+
+func weapon_atk(k: String) -> int:
+	if k == "" or not WEAPONS.has(k):
+		return 0
+	return int(WEAPONS[k]["atk"])
+
+func weapon_rng(k: String) -> int:
+	if k == "" or not WEAPONS.has(k):
+		return 0
+	return int(WEAPONS[k]["rng"])
+
+func can_equip(kind: String, k: String) -> bool:
+	if not WEAPONS.has(k) or not WTYPE.has(kind):
+		return false
+	return String(WEAPONS[k]["type"]) == String(WTYPE[kind])
+
+func starter(kind: String) -> String:
+	if not WTYPE.has(kind):
+		return ""
+	return String(WTYPE[kind]) + "1"
+
 const ITEMS := ["POTION", "NUT", "STONE"]
 const ITEM_JA := {"POTION": "傷薬", "NUT": "活力の実", "STONE": "投げ石"}
 const ITEM_INFO := {

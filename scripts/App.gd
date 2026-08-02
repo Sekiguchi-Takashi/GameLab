@@ -1,6 +1,6 @@
 extends Node2D
 
-enum S { TITLE, PREP, TALK_IN, BATTLE, TALK_OUT, CHECK, END }
+enum S { TITLE, PREP, TALK_IN, BATTLE, TALK_OUT, CHECK, END, DETAIL }
 
 var state: int = S.TITLE
 var title_n = null
@@ -8,6 +8,7 @@ var prep_n = null
 var talk_n = null
 var battle_n = null
 var check_n = null
+var detail_n = null
 
 func _ready() -> void:
 	Save.read_trace()
@@ -29,6 +30,11 @@ func _ready() -> void:
 	check_n = preload("res://scripts/Check.gd").new()
 	check_n.visible = false
 	add_child(check_n)
+	detail_n = preload("res://scripts/Detail.gd").new()
+	detail_n.visible = false
+	detail_n.closed.connect(_on_detail_closed, CONNECT_DEFERRED)
+	add_child(detail_n)
+	prep_n.open_detail.connect(_on_open_detail, CONNECT_DEFERRED)
 	Sound.bgm("title")
 
 func _show(s: int) -> void:
@@ -38,6 +44,7 @@ func _show(s: int) -> void:
 	prep_n.visible = s == S.PREP
 	talk_n.visible = s == S.TALK_IN or s == S.TALK_OUT
 	check_n.visible = s == S.CHECK
+	detail_n.visible = s == S.DETAIL
 	if battle_n != null:
 		battle_n.visible = s == S.BATTLE
 
@@ -53,6 +60,14 @@ func _on_title(what: String) -> void:
 			_go_prep()
 	else:
 		_show(S.CHECK)
+
+func _on_open_detail(i: int) -> void:
+	detail_n.setup(i)
+	_show(S.DETAIL)
+
+func _on_detail_closed() -> void:
+	prep_n.setup(Save.map_index)
+	_show(S.PREP)
 
 func _go_prep() -> void:
 	Save.trace("PREP%d" % Save.map_index)
@@ -124,6 +139,10 @@ func _on_battle_done(win: bool) -> void:
 		battle_n = null
 	Save.trace("FREED")
 	Save.resupply()
+	if battle_n != null:
+		var dr: Array = battle_n.drops
+		for k in dr:
+			Save.add_stash(String(k))
 	Save.trace("STORE")
 	var m: Dictionary = Maps.get_map(Save.map_index)
 	talk_n.setup(Gfx.L("勝利", "VICTORY"), Maps.outro_of(m))
@@ -139,6 +158,8 @@ func _unhandled_input(e: InputEvent) -> void:
 		prep_n.tap(p)
 	elif state == S.TALK_IN or state == S.TALK_OUT:
 		talk_n.tap(p)
+	elif state == S.DETAIL:
+		detail_n.tap(p)
 	elif state == S.CHECK:
 		if check_n.tap(p):
 			_show(S.TITLE)

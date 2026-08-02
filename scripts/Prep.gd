@@ -1,6 +1,7 @@
 extends Node2D
 
 signal start_battle
+signal open_detail(i: int)
 
 var map_i := 0
 
@@ -40,16 +41,8 @@ func tap(p: Vector2) -> void:
 		return
 	for i in Save.roster.size():
 		if _row(i).has_point(p):
-			var e: Dictionary = Save.roster[i]
-			if Units.can_promote(e):
-				Save.roster[i] = Units.promote(e)
-				Sound.play("level")
-				note = "%s %s" % [Units.label(String(Save.roster[i]["kind"])), Gfx.L("に昇格", "PROMOTED")]
-				note_t = 2.5
-			else:
-				Sound.play("cancel")
-				note = Gfx.L("昇格はLV10から", "PROMOTE AT LV10")
-				note_t = 2.0
+			Sound.play("select")
+			open_detail.emit(i)
 			return
 
 func _process(d: float) -> void:
@@ -85,11 +78,13 @@ func _draw() -> void:
 		Gfx.jtext(self, "%s  LV%d" % [Units.label(String(r["kind"])), int(r["lv"])], Vector2(rr.position.x + 52.0, rr.position.y + 2.0), Pal.c("white"), 15)
 		Gfx.text(self, "HP %d/%d  MP %d  ATK %d  DEF %d" % [int(r["hp"]), int(r["mhp"]), int(r["mp"]), int(r["atk"]), int(r["def"])], Vector2(rr.position.x + 52.0, rr.position.y + 20.0), Pal.c("gray"))
 		_mark("DP%d" % i)
+		var wl: String = Units.weapon_label(String(r["weapon"]))
+		Gfx.jtext(self, wl, Vector2(rr.position.x + 250.0, rr.position.y + 2.0), Pal.c("cyan"), 13)
 		if Units.can_promote(r):
-			Gfx.jtext(self, Gfx.L("昇格可", "PROMOTE"), Vector2(rr.position.x + 340.0, rr.position.y + 8.0), Pal.c("yellow"), 14)
+			Gfx.jtext(self, Gfx.L("昇格可", "PROMOTE"), Vector2(rr.position.x + 250.0, rr.position.y + 19.0), Pal.c("yellow"), 13)
 	Gfx.jtext(self, Gfx.L("全員が出撃する。", "ALL UNITS DEPLOY."), Vector2(440.0, 96.0), Pal.c("gray"), 13)
-	Gfx.jtext(self, Gfx.L("LV10で行をタップ", "TAP A ROW AT LV10"), Vector2(440.0, 176.0), Pal.c("cyan"), 13)
-	Gfx.jtext(self, Gfx.L("すると昇格する。", "TO PROMOTE."), Vector2(440.0, 196.0), Pal.c("cyan"), 13)
+	Gfx.jtext(self, Gfx.L("行をタップで", "TAP A ROW FOR"), Vector2(440.0, 176.0), Pal.c("cyan"), 13)
+	Gfx.jtext(self, Gfx.L("装備と昇格。", "GEAR AND PROMOTION."), Vector2(440.0, 196.0), Pal.c("cyan"), 13)
 	_mark("D3")
 	var it := "%s %d  %s %d  %s %d" % [Units.item_label("POTION"), int(Save.items["POTION"]), Units.item_label("NUT"), int(Save.items["NUT"]), Units.item_label("STONE"), int(Save.items["STONE"])]
 	Gfx.jtext(self, it, Vector2(16.0, 296.0), Pal.c("lgreen"), 14)

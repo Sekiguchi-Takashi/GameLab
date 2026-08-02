@@ -16,6 +16,7 @@ var mapdef: Dictionary = {}
 var goal := Vector2i(-1, -1)
 var limit := 0
 var result_sent := false
+var drops: Array = []
 
 var units: Array = []
 var order: Array = []
@@ -82,6 +83,7 @@ func _setup() -> void:
 			eu["atk"] = int(eu["atk"]) + 3
 			eu["def"] = int(eu["def"]) + 2
 		_push(eu, 1)
+	drops = []
 	_validate()
 	queue.clear()
 	anim = {}
@@ -518,6 +520,10 @@ func _damage(a: int, b: int, mult: float) -> void:
 	if int(ub["hp"]) <= 0:
 		msg = "%s %s" % [Units.label(String(ub["kind"])), Gfx.L("撃破", "DOWN")]
 		Sound.play("down")
+		if int(ub["team"]) == 1 and randf() < 0.34:
+			var pool: Array = Units.DROPS
+			drops.append(String(pool[randi() % pool.size()]))
+			_banner(Gfx.L("戦利品を得た", "LOOT FOUND"))
 		_gain_exp(a, 30)
 		queue.append({"k": "death", "u": b, "t": 0.0})
 

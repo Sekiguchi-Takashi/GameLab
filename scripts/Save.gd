@@ -8,6 +8,7 @@ var last_trace := ""
 var map_index := 0
 var roster: Array = []
 var items: Dictionary = {"POTION": 3, "NUT": 2, "STONE": 3}
+var stash: Dictionary = {}
 
 func read_trace() -> void:
 	if not FileAccess.file_exists(TRACE):
@@ -48,10 +49,31 @@ func has_save() -> bool:
 func new_game() -> void:
 	map_index = 0
 	items = {"POTION": 3, "NUT": 2, "STONE": 3}
+	stash = {}
 	roster = []
 	for k in ["KNIGHT", "LANCER", "ARCHER", "MAGE", "CLERIC"]:
 		var u: Dictionary = Units.make(String(k), 0, 0, 0)
-		roster.append(_strip(u))
+		var e := _strip(u)
+		e["weapon"] = Units.starter(String(k))
+		roster.append(e)
+
+func _wep(u: Dictionary) -> String:
+	if u.has("weapon"):
+		return String(u["weapon"])
+	return ""
+
+func add_stash(k: String) -> void:
+	if not stash.has(k):
+		stash[k] = 0
+	stash[k] = int(stash[k]) + 1
+
+func take_stash(k: String) -> bool:
+	if not stash.has(k) or int(stash[k]) <= 0:
+		return false
+	stash[k] = int(stash[k]) - 1
+	if int(stash[k]) <= 0:
+		stash.erase(k)
+	return true
 
 func _num(u: Dictionary, k: String, d: int) -> int:
 	if u.has(k):
@@ -61,6 +83,7 @@ func _num(u: Dictionary, k: String, d: int) -> int:
 func _strip(u: Dictionary) -> Dictionary:
 	return {
 		"kind": String(u["kind"]),
+		"weapon": _wep(u),
 		"lv": _num(u, "lv", 1), "exp": _num(u, "exp", 0),
 		"hp": _num(u, "hp", 10), "mhp": _num(u, "mhp", 10),
 		"atk": _num(u, "atk", 5), "def": _num(u, "def", 3),
@@ -93,7 +116,7 @@ func save_game() -> void:
 	var f := FileAccess.open(PATH, FileAccess.WRITE)
 	if f == null:
 		return
-	f.store_string(JSON.stringify({"map": map_index, "roster": roster, "items": items}))
+	f.store_string(JSON.stringify({"map": map_index, "roster": roster, "items": items, "stash": stash}))
 	f.close()
 
 func load_game() -> bool:
@@ -120,11 +143,18 @@ func load_game() -> bool:
 		var out: Dictionary = {}
 		for k in ed.keys():
 			var key: String = String(k)
-			if key == "kind":
+			if key == "kind" or key == "weapon":
 				out[key] = String(ed[k])
 			else:
 				out[key] = int(ed[k])
+		if not out.has("weapon"):
+			out["weapon"] = Units.starter(String(out["kind"]))
 		roster.append(out)
+	stash = {}
+	if d.has("stash"):
+		var sd: Dictionary = d["stash"]
+		for k in sd.keys():
+			stash[String(k)] = int(sd[k])
 	items = {"POTION": 3, "NUT": 2, "STONE": 3}
 	if d.has("items"):
 		var it: Dictionary = d["items"]
@@ -141,4 +171,8 @@ func make_unit(entry: Dictionary, x: int, y: int) -> Dictionary:
 	for k in ["lv", "exp", "hp", "mhp", "atk", "def", "mov", "rng", "spd", "mp", "mmp"]:
 		if entry.has(k):
 			u[k] = int(entry[k])
+	var w := _wep(entry)
+	u["weapon"] = w
+	u["atk"] = int(u["atk"]) + Units.weapon_atk(w)
+	u["rng"] = int(u["rng"]) + Units.weapon_rng(w)
 	return u

@@ -1,10 +1,46 @@
 extends Node
 
 const PATH := "user://save.json"
+const TRACE := "user://trace.txt"
+
+var last_trace := ""
 
 var map_index := 0
 var roster: Array = []
 var items: Dictionary = {"POTION": 3, "NUT": 2, "STONE": 3}
+
+func read_trace() -> void:
+	if not FileAccess.file_exists(TRACE):
+		last_trace = "NO TRACE"
+		return
+	var f := FileAccess.open(TRACE, FileAccess.READ)
+	if f == null:
+		last_trace = "NO TRACE"
+		return
+	var t: String = f.get_as_text()
+	f.close()
+	var parts: PackedStringArray = t.strip_edges().split("\n")
+	var out: Array = []
+	var n: int = parts.size()
+	for i in range(maxi(n - 4, 0), n):
+		out.append(String(parts[i]))
+	last_trace = " > ".join(out)
+
+func trace(tag: String) -> void:
+	var f := FileAccess.open(TRACE, FileAccess.READ_WRITE)
+	if f == null:
+		f = FileAccess.open(TRACE, FileAccess.WRITE)
+	if f == null:
+		return
+	f.seek_end()
+	f.store_string(tag + "\n")
+	f.close()
+
+func clear_trace() -> void:
+	var f := FileAccess.open(TRACE, FileAccess.WRITE)
+	if f != null:
+		f.store_string("")
+		f.close()
 
 func has_save() -> bool:
 	return FileAccess.file_exists(PATH)
@@ -17,17 +53,24 @@ func new_game() -> void:
 		var u: Dictionary = Units.make(String(k), 0, 0, 0)
 		roster.append(_strip(u))
 
+func _num(u: Dictionary, k: String, d: int) -> int:
+	if u.has(k):
+		return int(u[k])
+	return d
+
 func _strip(u: Dictionary) -> Dictionary:
 	return {
 		"kind": String(u["kind"]),
-		"lv": int(u["lv"]), "exp": int(u["exp"]),
-		"hp": int(u["hp"]), "mhp": int(u["mhp"]),
-		"atk": int(u["atk"]), "def": int(u["def"]),
-		"mov": int(u["mov"]), "rng": int(u["rng"]), "spd": int(u["spd"]),
-		"mp": int(u["mp"]), "mmp": int(u["mmp"]),
+		"lv": _num(u, "lv", 1), "exp": _num(u, "exp", 0),
+		"hp": _num(u, "hp", 10), "mhp": _num(u, "mhp", 10),
+		"atk": _num(u, "atk", 5), "def": _num(u, "def", 3),
+		"mov": _num(u, "mov", 4), "rng": _num(u, "rng", 1), "spd": _num(u, "spd", 5),
+		"mp": _num(u, "mp", 0), "mmp": _num(u, "mmp", 0),
 	}
 
 func store(u: Dictionary) -> void:
+	if not u.has("kind"):
+		return
 	var s := _strip(u)
 	for i in roster.size():
 		var r: Dictionary = roster[i]

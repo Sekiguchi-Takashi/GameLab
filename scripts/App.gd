@@ -10,6 +10,9 @@ var battle_n = null
 var check_n = null
 
 func _ready() -> void:
+	Save.read_trace()
+	Save.clear_trace()
+	Save.trace("BOOT")
 	if Save.roster.is_empty():
 		Save.new_game()
 	title_n = preload("res://scripts/Title.gd").new()
@@ -30,6 +33,7 @@ func _ready() -> void:
 
 func _show(s: int) -> void:
 	state = s
+	Save.trace("SHOW%d/M%d" % [s, Save.map_index])
 	title_n.visible = s == S.TITLE
 	prep_n.visible = s == S.PREP
 	talk_n.visible = s == S.TALK_IN or s == S.TALK_OUT
@@ -51,6 +55,7 @@ func _on_title(what: String) -> void:
 		_show(S.CHECK)
 
 func _go_prep() -> void:
+	Save.trace("PREP%d" % Save.map_index)
 	if Save.map_index >= Maps.count():
 		_show(S.END)
 		return
@@ -68,10 +73,13 @@ func _on_talk_done() -> void:
 		_start_battle()
 	else:
 		Save.map_index += 1
+		Save.trace("ADV%d" % Save.map_index)
 		Save.save_game()
+		Save.trace("SAVED")
 		_go_prep()
 
 func _start_battle() -> void:
+	Save.trace("BATTLE%d" % Save.map_index)
 	Sound.bgm("battle")
 	if battle_n != null:
 		battle_n.queue_free()
@@ -83,15 +91,18 @@ func _start_battle() -> void:
 	_show(S.BATTLE)
 
 func _on_battle_done(win: bool) -> void:
+	Save.trace("DONE" + str(win))
 	if not win:
 		Sound.bgm("title")
 		_show(S.TITLE)
 		return
-	for u in battle_n.units:
+	var bu: Array = battle_n.units
+	for u in bu:
 		var uu: Dictionary = u
 		if int(uu["team"]) == 0:
 			Save.store(uu)
 	Save.resupply()
+	Save.trace("STORE")
 	var m: Dictionary = Maps.get_map(Save.map_index)
 	talk_n.setup(Gfx.L("勝利", "VICTORY"), Maps.outro_of(m))
 	_show(S.TALK_OUT)

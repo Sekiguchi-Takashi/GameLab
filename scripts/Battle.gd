@@ -192,6 +192,8 @@ func busy() -> bool:
 # ------------- order -------------
 
 func _begin_round() -> void:
+	if over:
+		return
 	rnd += 1
 	if String(mapdef["win"]) == "SURVIVE" and rnd > limit:
 		_finish(true)
@@ -207,6 +209,13 @@ func _begin_round() -> void:
 		uu["moved"] = false
 		uu["acted"] = false
 	_terrain_tick()
+	_check_over()
+	if over:
+		return
+	if order.is_empty():
+		_check_over()
+		over = true
+		return
 	oi = -1
 	_banner("%s %d" % [Gfx.L("第", "ROUND"), rnd])
 	_next_unit()
@@ -238,6 +247,8 @@ func _by_speed(a, b) -> bool:
 	return int(a) < int(b)
 
 func _next_unit() -> void:
+	if over:
+		return
 	_clear_sel()
 	oi += 1
 	while oi < order.size():

@@ -13,12 +13,33 @@ func _row(i: int) -> Rect2:
 func _btn_go() -> Rect2:
 	return Rect2(440.0, 296.0, 184.0, 40.0)
 
+var note := ""
+var note_t := 0.0
+
 func tap(p: Vector2) -> void:
 	if _btn_go().has_point(p):
 		Sound.play("confirm")
 		start_battle.emit()
+		return
+	for i in Save.roster.size():
+		if _row(i).has_point(p):
+			var e: Dictionary = Save.roster[i]
+			if Units.can_promote(e):
+				Save.roster[i] = Units.promote(e)
+				Sound.play("level")
+				note = "%s %s" % [Units.label(String(Save.roster[i]["kind"])), Gfx.L("に昇格", "PROMOTED")]
+				note_t = 2.5
+			else:
+				Sound.play("cancel")
+				note = Gfx.L("昇格はLV10から", "PROMOTE AT LV10")
+				note_t = 2.0
+			return
 
-func _process(_d: float) -> void:
+func _process(d: float) -> void:
+	if note_t > 0.0:
+		note_t -= d
+		if note_t <= 0.0:
+			note = ""
 	queue_redraw()
 
 func _draw() -> void:
@@ -36,7 +57,15 @@ func _draw() -> void:
 		draw_texture_rect_region(tex, Rect2(rr.position.x + 2.0, rr.position.y - 4.0, 44.0, 44.0), Rect2(0.0, 0.0, 48.0, 48.0))
 		Gfx.jtext(self, "%s  LV%d" % [Units.label(String(r["kind"])), int(r["lv"])], Vector2(rr.position.x + 52.0, rr.position.y + 2.0), Pal.c("white"), 15)
 		Gfx.text(self, "HP %d/%d  MP %d  ATK %d  DEF %d" % [int(r["hp"]), int(r["mhp"]), int(r["mp"]), int(r["atk"]), int(r["def"])], Vector2(rr.position.x + 52.0, rr.position.y + 20.0), Pal.c("gray"))
+		if Units.can_promote(r):
+			Gfx.jtext(self, Gfx.L("昇格可", "PROMOTE"), Vector2(rr.position.x + 340.0, rr.position.y + 8.0), Pal.c("yellow"), 14)
 	Gfx.jtext(self, Gfx.L("全員が出撃する。", "ALL UNITS DEPLOY."), Vector2(440.0, 96.0), Pal.c("gray"), 13)
+	Gfx.jtext(self, Gfx.L("LV10で行をタップ", "TAP A ROW AT LV10"), Vector2(440.0, 176.0), Pal.c("cyan"), 13)
+	Gfx.jtext(self, Gfx.L("すると昇格する。", "TO PROMOTE."), Vector2(440.0, 196.0), Pal.c("cyan"), 13)
+	var it := "%s %d  %s %d  %s %d" % [Units.item_label("POTION"), int(Save.items["POTION"]), Units.item_label("NUT"), int(Save.items["NUT"]), Units.item_label("STONE"), int(Save.items["STONE"])]
+	Gfx.jtext(self, it, Vector2(16.0, 296.0), Pal.c("lgreen"), 14)
+	if note != "":
+		Gfx.jtext(self, note, Vector2(16.0, 318.0), Pal.c("yellow"), 14)
 	Gfx.jtext(self, Gfx.L("戦闘前にHPとMPは", "HP AND MP ARE"), Vector2(440.0, 116.0), Pal.c("gray"), 13)
 	Gfx.jtext(self, Gfx.L("全回復する。", "RESTORED BEFORE EACH BATTLE."), Vector2(440.0, 136.0), Pal.c("gray"), 13)
 	var b := _btn_go()

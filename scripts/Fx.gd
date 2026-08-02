@@ -2,23 +2,28 @@ extends Node2D
 
 var flash := 0.0
 var shake := 0.0
-var shake_len := 0.2
 var hitstop := 0.0
 var pops: Array = []
+
+const SHAKE_LEN := 0.24
+const FLASH_LEN := 0.07
 
 func _ready() -> void:
 	z_index = 90
 
 func hit(world_pos: Vector2, n: int, crit: bool) -> void:
-	flash = 0.07
-	shake = 0.22
-	hitstop = 0.10
+	flash = FLASH_LEN
+	shake = SHAKE_LEN
+	hitstop = 0.09
+	if crit:
+		shake = 0.36
+		hitstop = 0.16
 	pops.append({"p": world_pos, "t": 0.0, "n": n, "c": crit})
 
 func offset() -> Vector2:
 	if shake <= 0.0:
 		return Vector2.ZERO
-	var k: float = shake / shake_len
+	var k: float = shake / SHAKE_LEN
 	return Vector2(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0)) * 5.0 * k
 
 func tick(d: float) -> float:
@@ -28,7 +33,7 @@ func tick(d: float) -> float:
 	for p in pops:
 		var pp: Dictionary = p
 		pp["t"] = float(pp["t"]) + d
-		if float(pp["t"]) < 0.9:
+		if float(pp["t"]) < 0.95:
 			keep.append(pp)
 	pops = keep
 	if hitstop > 0.0:
@@ -40,16 +45,18 @@ func draw_pops(ci: CanvasItem, cam: Vector2, view: Rect2) -> void:
 	for p in pops:
 		var pp: Dictionary = p
 		var k: float = float(pp["t"])
-		var off: float = -sin(minf(k * 3.2, PI)) * 20.0
+		var off: float = -sin(minf(k * 3.0, PI)) * 22.0
 		var wp: Vector2 = pp["p"]
-		var sp := wp - cam + view.position + Vector2(6.0, off)
+		var sp := wp - cam + view.position + Vector2(8.0, off)
 		var col: Color = Pal.c("white")
 		if bool(pp["c"]):
 			col = Pal.c("yellow")
-		if int(k * 20.0) % 2 == 0:
+		if int(k * 22.0) % 2 == 0:
 			col = Pal.c("red")
-		Gfx.text(ci, str(pp["n"]), sp, col)
+		if bool(pp["c"]):
+			Gfx.text(ci, "!", sp + Vector2(float(str(int(pp["n"])).length()) * 6.0, 0.0), col)
+		Gfx.text(ci, str(int(pp["n"])), sp, col)
 
 func draw_flash(ci: CanvasItem, view: Rect2) -> void:
 	if flash > 0.0:
-		ci.draw_rect(view, Color(1, 1, 1, flash / 0.07 * 0.55))
+		ci.draw_rect(view, Color(1, 1, 1, flash / FLASH_LEN * 0.5))

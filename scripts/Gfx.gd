@@ -181,3 +181,23 @@ func art(name: String) -> ImageTexture:
 	var t := ImageTexture.create_from_image(img)
 	_cache[key] = t
 	return t
+
+func art_white(name: String) -> ImageTexture:
+	var key := "white:" + name
+	if _cache.has(key):
+		return _cache[key]
+	var e: Dictionary = Art.A[name]
+	var rows: Array = e["a"]
+	var h2: int = rows.size()
+	var w: int = String(rows[0]).length()
+	var img := Image.create(w, h2, false, Image.FORMAT_RGBA8)
+	img.fill(Color(0, 0, 0, 0))
+	for y in h2:
+		var line: String = rows[y]
+		for x in w:
+			if line[x] == ".":
+				continue
+			img.set_pixel(x, y, Color(1, 1, 1, 1))
+	var t := ImageTexture.create_from_image(img)
+	_cache[key] = t
+	return t

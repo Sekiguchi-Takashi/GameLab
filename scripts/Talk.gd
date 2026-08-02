@@ -8,6 +8,7 @@ var shown := 0.0
 var title := ""
 
 var traced := false
+var emitted := false
 
 func setup(t: String, l: Array) -> void:
 	title = t
@@ -17,6 +18,7 @@ func setup(t: String, l: Array) -> void:
 	if lines.is_empty():
 		lines.append("...")
 	traced = false
+	emitted = false
 	Save.trace("TSET%d" % lines.size())
 	page = 0
 	shown = 0.0
@@ -34,7 +36,9 @@ func tap(_p: Vector2) -> void:
 		return
 	page += 1
 	shown = 0.0
-	if page >= lines.size():
+	if page >= lines.size() and not emitted:
+		emitted = true
+		Save.trace("EMIT")
 		done.emit()
 
 func _process(d: float) -> void:

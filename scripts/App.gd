@@ -16,14 +16,14 @@ func _ready() -> void:
 	if Save.roster.is_empty():
 		Save.new_game()
 	title_n = preload("res://scripts/Title.gd").new()
-	title_n.pick.connect(_on_title)
+	title_n.pick.connect(_on_title, CONNECT_DEFERRED)
 	add_child(title_n)
 	prep_n = preload("res://scripts/Prep.gd").new()
-	prep_n.start_battle.connect(_on_deploy)
+	prep_n.start_battle.connect(_on_deploy, CONNECT_DEFERRED)
 	prep_n.visible = false
 	add_child(prep_n)
 	talk_n = preload("res://scripts/Talk.gd").new()
-	talk_n.done.connect(_on_talk_done)
+	talk_n.done.connect(_on_talk_done, CONNECT_DEFERRED)
 	talk_n.visible = false
 	add_child(talk_n)
 	check_n = preload("res://scripts/Check.gd").new()
@@ -83,6 +83,8 @@ func _on_talk_done() -> void:
 
 func _start_battle() -> void:
 	Save.trace("BATTLE%d" % Save.map_index)
+	if state == S.BATTLE:
+		return
 	Sound.bgm("battle")
 	if battle_n != null:
 		battle_n.finished.disconnect(_on_battle_done)
@@ -90,7 +92,7 @@ func _start_battle() -> void:
 		battle_n.queue_free()
 		battle_n = null
 	battle_n = preload("res://scripts/Battle.gd").new()
-	battle_n.finished.connect(_on_battle_done)
+	battle_n.finished.connect(_on_battle_done, CONNECT_DEFERRED)
 	add_child(battle_n)
 	move_child(battle_n, 0)
 	battle_n.start(Save.map_index)

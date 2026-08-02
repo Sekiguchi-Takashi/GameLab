@@ -751,6 +751,7 @@ func _tap(p: Vector2) -> void:
 	if over:
 		if _btn(3).has_point(p) and not result_sent:
 			result_sent = true
+			Save.trace("BEMIT")
 			finished.emit(String(msg) == "CLEAR")
 		return
 	if busy() or active < 0:

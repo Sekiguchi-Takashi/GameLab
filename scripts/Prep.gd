@@ -20,6 +20,7 @@ var note_t := 0.0
 func tap(p: Vector2) -> void:
 	if _btn_go().has_point(p):
 		Sound.play("confirm")
+		Save.trace("DEPLOY")
 		start_battle.emit()
 		return
 	for i in Save.roster.size():

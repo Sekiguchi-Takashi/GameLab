@@ -65,6 +65,8 @@ var jfont: FontFile = null
 var jfont_path := "NONE"
 var _atlas: ImageTexture
 var _order := {}
+var _miss := {}
+var ext_count := 0
 var _cache := {}
 
 func _ready() -> void:
@@ -208,6 +210,36 @@ func art(name: String) -> ImageTexture:
 func art_white(name: String) -> ImageTexture:
 	return art_v(name, true, false)
 
+func _ext_image(name: String) -> Image:
+	if _miss.has(name):
+		return null
+	var path := "res://art/%s.png" % name
+	if not ResourceLoader.exists(path):
+		_miss[name] = true
+		return null
+	var res = load(path)
+	if res == null:
+		_miss[name] = true
+		return null
+	var tex: Texture2D = res
+	var img: Image = tex.get_image()
+	if img == null:
+		_miss[name] = true
+		return null
+	if img.is_compressed():
+		img.decompress()
+	img.convert(Image.FORMAT_RGBA8)
+	ext_count += 1
+	return img
+
+func draw_unit(ci: CanvasItem, name: String, flip: bool, dst: Rect2, tint: Color) -> void:
+	var t := art_v(name, false, flip)
+	ci.draw_texture_rect_region(t, dst, Rect2(0.0, 0.0, float(t.get_width()), float(t.get_height())), tint)
+
+func draw_unit_white(ci: CanvasItem, name: String, flip: bool, dst: Rect2, tint: Color) -> void:
+	var t := art_v(name, true, flip)
+	ci.draw_texture_rect_region(t, dst, Rect2(0.0, 0.0, float(t.get_width()), float(t.get_height())), tint)
+
 func art_v(name: String, white: bool, flip: bool) -> ImageTexture:
 	var key := "a:" + name
 	if white:
@@ -216,6 +248,27 @@ func art_v(name: String, white: bool, flip: bool) -> ImageTexture:
 		key += ":f"
 	if _cache.has(key):
 		return _cache[key]
+	var ext := _ext_image(name)
+	if ext != null:
+		var ew: int = ext.get_width()
+		var eh: int = ext.get_height()
+		var oimg := Image.create(ew, eh, false, Image.FORMAT_RGBA8)
+		oimg.fill(Color(0, 0, 0, 0))
+		for y in eh:
+			for x in ew:
+				var c: Color = ext.get_pixel(x, y)
+				if c.a < 0.04:
+					continue
+				var dx2: int = x
+				if flip:
+					dx2 = ew - 1 - x
+				if white:
+					oimg.set_pixel(dx2, y, Color(1, 1, 1, c.a))
+				else:
+					oimg.set_pixel(dx2, y, c)
+		var ot := ImageTexture.create_from_image(oimg)
+		_cache[key] = ot
+		return ot
 	var e: Dictionary = Art.A[name]
 	var hexes: Array = e["p"]
 	var cols: Array = []

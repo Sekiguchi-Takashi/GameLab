@@ -1181,16 +1181,13 @@ func _draw_units() -> void:
 			frame = 1
 		var nm := "%s%d" % [u["kind"], frame]
 		var flip: bool = int(u["face"]) < 0
-		var tex: Texture2D = Gfx.art_v(nm, false, flip)
 		var dst := Rect2(sp.x - 8.0, sp.y - 16.0, 48.0, 48.0)
-		var src := Rect2(0.0, 0.0, 48.0, 48.0)
 		var tint := Color(1, 1, 1, float(u["fade"]))
 		if bool(u["acted"]) and int(u["hp"]) > 0:
 			tint = Color(0.56, 0.62, 0.72, float(u["fade"]))
-		draw_texture_rect_region(tex, dst, src, tint)
+		Gfx.draw_unit(self, nm, flip, dst, tint)
 		if float(u["flash"]) > 0.0:
-			var wt: Texture2D = Gfx.art_v(nm, true, flip)
-			draw_texture_rect_region(wt, dst, src, Color(1, 1, 1, float(u["flash"]) / 0.22 * 0.85))
+			Gfx.draw_unit_white(self, nm, flip, dst, Color(1, 1, 1, float(u["flash"]) / 0.22 * 0.85))
 		if int(u["hp"]) > 0:
 			var ratio: float = float(u["hp"]) / float(u["mhp"])
 			var vr: float = clampf(float(u["hpv"]) / float(u["mhp"]), 0.0, 1.0)
@@ -1335,8 +1332,7 @@ func _draw_result() -> void:
 					continue
 				var tx: float = 90.0 + float(n) * 96.0
 				var ty: float = 150.0 - 20.0 * clampf(g * 3.0 - float(n) * 0.4, 0.0, 1.0)
-				var tex: Texture2D = Gfx.art_v("%s0" % String(d2["kind"]), false, false)
-				draw_texture_rect_region(tex, Rect2(tx, ty, 64.0, 64.0), Rect2(0.0, 0.0, 48.0, 48.0), Color(1, 1, 1, clampf(g * 3.0 - float(n) * 0.4, 0.0, 1.0)))
+				Gfx.draw_unit(self, "%s0" % String(d2["kind"]), false, Rect2(tx, ty, 64.0, 64.0), Color(1, 1, 1, clampf(g * 3.0 - float(n) * 0.4, 0.0, 1.0)))
 				n += 1
 	else:
 		var u2: float = clampf(over_t / 1.2, 0.0, 1.0)

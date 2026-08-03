@@ -63,4 +63,4 @@ func draw_map(ci: CanvasItem, cam: Vector2, view: Rect2) -> void:
 			var tname: String = Art.TILE_KINDS[at(x, y)]
 			var t: Texture2D = Gfx.art(tname)
 			var p := Vector2(float(x) * TS, float(y) * TS) - cam + view.position
-			ci.draw_texture_rect_region(t, Rect2(p.x, p.y, TS, TS), Rect2(0.0, 0.0, TS, TS))
+			ci.draw_texture_rect_region(t, Rect2(p.x, p.y, TS, TS), Rect2(0.0, 0.0, float(t.get_width()), float(t.get_height())))

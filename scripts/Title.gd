@@ -6,12 +6,7 @@ func _btn(i: int) -> Rect2:
 	return Rect2(200.0, 150.0 + float(i) * 42.0, 240.0, 32.0)
 
 func _labels() -> Array:
-	var out: Array = [Gfx.L("はじめから", "NEW GAME")]
-	if Save.has_save():
-		out.append(Gfx.L("つづきから", "CONTINUE"))
-	out.append(Gfx.L("確認リスト", "CHECK LIST"))
-	out.append(Gfx.L("音 " + _snd(), "SOUND " + _snd()))
-	return out
+	return [Gfx.L("はじめる", "PLAY"), Gfx.L("戦績", "RECORDS"), Gfx.L("確認リスト", "CHECK LIST"), Gfx.L("音 " + _snd(), "SOUND " + _snd())]
 
 func _snd() -> String:
 	if Sound.enabled:
@@ -23,18 +18,16 @@ func tap(p: Vector2) -> void:
 	for i in l.size():
 		if _btn(i).has_point(p):
 			Sound.play("confirm")
-			if i == l.size() - 1:
+			if i == 0:
+				pick.emit("PLAY")
+			elif i == 1:
+				pick.emit("RECORDS")
+			elif i == 2:
+				pick.emit("CHECK")
+			else:
 				Sound.toggle()
 				if Sound.enabled:
 					Sound.bgm("title")
-				return
-			if i == l.size() - 2:
-				pick.emit("CHECK")
-				return
-			if i == 0:
-				pick.emit("NEW")
-			else:
-				pick.emit("CONTINUE")
 			return
 
 func _process(_d: float) -> void:

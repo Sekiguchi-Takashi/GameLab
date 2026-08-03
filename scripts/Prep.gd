@@ -75,7 +75,7 @@ func _draw() -> void:
 		_mark("DA%d" % i)
 		var tex: Texture2D = Gfx.art("%s0" % String(r["kind"]))
 		draw_texture_rect_region(tex, Rect2(rr.position.x + 2.0, rr.position.y - 4.0, 44.0, 44.0), Rect2(0.0, 0.0, 48.0, 48.0))
-		Gfx.jtext(self, "%s  LV%d" % [Units.label(String(r["kind"])), int(r["lv"])], Vector2(rr.position.x + 52.0, rr.position.y + 2.0), Pal.c("white"), 15)
+		Gfx.jtext(self, "%s  LV%d" % [Units.display(r), int(r["lv"])], Vector2(rr.position.x + 52.0, rr.position.y + 2.0), Pal.c("white"), 15)
 		Gfx.text(self, "HP %d/%d  MP %d  ATK %d  DEF %d" % [int(r["hp"]), int(r["mhp"]), int(r["mp"]), int(r["atk"]), int(r["def"])], Vector2(rr.position.x + 52.0, rr.position.y + 20.0), Pal.c("gray"))
 		_mark("DP%d" % i)
 		var wl: String = Units.weapon_label(String(r["weapon"]))

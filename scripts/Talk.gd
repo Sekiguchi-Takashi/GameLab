@@ -26,7 +26,12 @@ func setup(t: String, l: Array) -> void:
 func _full() -> bool:
 	if page >= lines.size():
 		return true
-	return shown >= float(String(lines[page]).length())
+	var raw: String = lines[page]
+	var bar := raw.find("|")
+	var body := raw
+	if bar >= 0:
+		body = raw.substr(bar + 1)
+	return shown >= float(body.length())
 
 func tap(_p: Vector2) -> void:
 	Save.trace("TTAP%d" % page)
@@ -58,16 +63,21 @@ func _draw() -> void:
 	draw_rect(Rect2(wx, wy, ww, wh), Pal.c("panel"))
 	draw_rect(Rect2(wx, wy, ww, wh), Pal.c("white"), false, 2.0)
 	draw_rect(Rect2(wx + 5.0, wy + 5.0, ww - 10.0, wh - 10.0), Pal.c("line"), false, 1.0)
-	var y := wy + 22.0
-	for i in range(page, mini(page + 2, lines.size())):
-		var s: String = lines[i]
-		var n: int = s.length()
-		if i == page:
-			n = clampi(int(shown), 0, s.length())
-		elif not _full():
-			n = 0
-		Gfx.jtext(self, s.substr(0, n), Vector2(wx + 20.0, y), Pal.c("white"), 16)
-		y += 26.0
+	var raw: String = lines[page]
+	var who := ""
+	var body := raw
+	var bar := raw.find("|")
+	if bar >= 0:
+		who = raw.substr(0, bar)
+		body = raw.substr(bar + 1)
+	if who != "":
+		var nw := Gfx.jwidth(who, 15) + 20.0
+		draw_rect(Rect2(wx + 12.0, wy - 18.0, nw, 22.0), Pal.c("panel"))
+		draw_rect(Rect2(wx + 12.0, wy - 18.0, nw, 22.0), Pal.c("yellow"), false, 2.0)
+		Gfx.jtext(self, who, Vector2(wx + 22.0, wy - 15.0), Pal.c("yellow"), 15)
+	var n: int = clampi(int(shown), 0, body.length())
+	Gfx.jtext(self, body.substr(0, n), Vector2(wx + 20.0, wy + 30.0), Pal.c("white"), 17)
+	Gfx.text(self, "%d/%d" % [page + 1, lines.size()], Vector2(wx + ww - 46.0, wy + 8.0), Pal.c("dgray"))
 	if _full() and int(Time.get_ticks_msec() / 380) % 2 == 0:
 		var px := wx + ww - 24.0
 		var py := wy + wh - 18.0

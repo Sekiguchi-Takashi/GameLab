@@ -99,7 +99,7 @@ func _draw() -> void:
 	var kind: String = String(e["kind"])
 	var tex: Texture2D = Gfx.art("%s0" % kind)
 	draw_texture_rect_region(tex, Rect2(20.0, 24.0, 80.0, 80.0), Rect2(0.0, 0.0, 48.0, 48.0))
-	Gfx.jtext(self, "%s  LV%d" % [Units.label(kind), int(e["lv"])], Vector2(112.0, 24.0), Pal.c("white"), 18)
+	Gfx.jtext(self, "%s  LV%d" % [Units.display(e), int(e["lv"])], Vector2(112.0, 24.0), Pal.c("white"), 18)
 	var w := String(e["weapon"])
 	var wa: int = Units.weapon_atk(w)
 	var wr: int = Units.weapon_rng(w)

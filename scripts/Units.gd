@@ -68,6 +68,21 @@ const JA_SKILL := {
 	"GUARD": "防御", "PIERCE": "貫き", "SNIPE": "狙撃", "BLAST": "爆炎", "HEAL": "治癒",
 }
 
+const HERO_JA := {"KNIGHT": "ロラン", "LANCER": "ギース", "ARCHER": "ミラ", "MAGE": "セルヴァ", "CLERIC": "ノエラ"}
+const HERO_EN := {"KNIGHT": "ROLAND", "LANCER": "GEESE", "ARCHER": "MIRA", "MAGE": "SELVA", "CLERIC": "NOELA"}
+
+func hero_name(entry: Dictionary) -> String:
+	if entry.has("name") and String(entry["name"]) != "":
+		return String(entry["name"])
+	return ""
+
+func display(entry: Dictionary) -> String:
+	var nm := hero_name(entry)
+	var cl := label(String(entry["kind"]))
+	if nm == "":
+		return cl
+	return "%s  %s" % [nm, cl]
+
 const WTYPE := {
 	"KNIGHT": "SWORD", "PALADIN": "SWORD",
 	"LANCER": "SPEAR", "DRAGOON": "SPEAR",

@@ -1,6 +1,6 @@
 extends Node2D
 
-enum S { TITLE, PREP, TALK_IN, BATTLE, TALK_OUT, CHECK, END, DETAIL }
+enum S { TITLE, PREP, TALK_IN, BATTLE, TALK_OUT, CHECK, END, DETAIL, SLOTS, RECORDS }
 
 var state: int = S.TITLE
 var title_n = null
@@ -9,6 +9,8 @@ var talk_n = null
 var battle_n = null
 var check_n = null
 var detail_n = null
+var slots_n = null
+var records_n = null
 
 func _ready() -> void:
 	Save.read_trace()
@@ -35,6 +37,15 @@ func _ready() -> void:
 	detail_n.closed.connect(_on_detail_closed, CONNECT_DEFERRED)
 	add_child(detail_n)
 	prep_n.open_detail.connect(_on_open_detail, CONNECT_DEFERRED)
+	slots_n = preload("res://scripts/Slots.gd").new()
+	slots_n.visible = false
+	slots_n.chosen.connect(_on_slot, CONNECT_DEFERRED)
+	slots_n.back.connect(_to_title, CONNECT_DEFERRED)
+	add_child(slots_n)
+	records_n = preload("res://scripts/Records.gd").new()
+	records_n.visible = false
+	records_n.back.connect(_to_title, CONNECT_DEFERRED)
+	add_child(records_n)
 	Sound.bgm("title")
 
 func _show(s: int) -> void:
@@ -45,21 +56,35 @@ func _show(s: int) -> void:
 	talk_n.visible = s == S.TALK_IN or s == S.TALK_OUT
 	check_n.visible = s == S.CHECK
 	detail_n.visible = s == S.DETAIL
+	slots_n.visible = s == S.SLOTS
+	records_n.visible = s == S.RECORDS
 	if battle_n != null:
 		battle_n.visible = s == S.BATTLE
 
+func _to_title() -> void:
+	Sound.bgm("title")
+	_show(S.TITLE)
+
 func _on_title(what: String) -> void:
-	if what == "NEW":
-		Save.new_game()
-		_go_prep()
-	elif what == "CONTINUE":
-		if Save.load_game():
-			_go_prep()
-		else:
-			Save.new_game()
-			_go_prep()
+	if what == "PLAY":
+		slots_n.setup()
+		_show(S.SLOTS)
+	elif what == "RECORDS":
+		_show(S.RECORDS)
 	else:
 		_show(S.CHECK)
+
+func _on_slot(sl: int, is_new: bool) -> void:
+	Save.slot = sl
+	if is_new:
+		var d := Save.difficulty
+		Save.new_game()
+		Save.difficulty = d
+		Save.save_game()
+	else:
+		if not Save.load_game():
+			Save.new_game()
+	_go_prep()
 
 func _on_open_detail(i: int) -> void:
 	detail_n.setup(i)
@@ -72,6 +97,9 @@ func _on_detail_closed() -> void:
 func _go_prep() -> void:
 	Save.trace("PREP%d" % Save.map_index)
 	if Save.map_index >= Maps.count():
+		Save.bump("clears", 1)
+		Save.save_game()
+		Sound.bgm("win")
 		_show(S.END)
 		return
 	Save.rest()
@@ -160,12 +188,24 @@ func _unhandled_input(e: InputEvent) -> void:
 		talk_n.tap(p)
 	elif state == S.DETAIL:
 		detail_n.tap(p)
+	elif state == S.SLOTS:
+		slots_n.tap(p)
+	elif state == S.RECORDS:
+		records_n.tap(p)
 	elif state == S.CHECK:
 		if check_n.tap(p):
 			_show(S.TITLE)
 	elif state == S.END:
-		Sound.bgm("title")
-		_show(S.TITLE)
+		if _end_btn().has_point(p):
+			Save.new_plus()
+			Save.save_game()
+			_go_prep()
+		else:
+			Sound.bgm("title")
+			_show(S.TITLE)
+
+func _end_btn() -> Rect2:
+	return Rect2(200.0, 300.0, 240.0, 34.0)
 
 func _process(_d: float) -> void:
 	queue_redraw()
@@ -173,7 +213,19 @@ func _process(_d: float) -> void:
 func _draw() -> void:
 	if state == S.END:
 		draw_rect(Rect2(0.0, 0.0, 640.0, 360.0), Color(0.05, 0.06, 0.09, 1.0))
+		var n := 0
+		for e in Save.roster:
+			var ee: Dictionary = e
+			var tex: Texture2D = Gfx.art("%s0" % String(ee["kind"]))
+			draw_texture_rect_region(tex, Rect2(70.0 + float(n) * 100.0, 210.0, 72.0, 72.0), Rect2(0.0, 0.0, 48.0, 48.0))
+			n += 1
+		var b := _end_btn()
+		draw_rect(b, Pal.c("panel"))
+		draw_rect(b, Pal.c("yellow"), false, 2.0)
+		var bs := Gfx.L("引き継いで最初から", "NEW GAME PLUS")
+		Gfx.jtext(self, bs, Vector2(b.position.x + (b.size.x - Gfx.jwidth(bs, 15)) * 0.5, b.position.y + 8.0), Pal.c("white"), 15)
 		var t := Gfx.L("すべての戦いを終えた", "ALL BATTLES CLEARED")
 		Gfx.jtext(self, t, Vector2(320.0 - Gfx.jwidth(t, 18) * 0.5, 146.0), Pal.c("yellow"), 18)
 		var t2 := Gfx.L("画面をタップでタイトルへ", "TAP TO RETURN TO TITLE")
 		Gfx.jtext(self, t2, Vector2(320.0 - Gfx.jwidth(t2, 13) * 0.5, 182.0), Pal.c("gray"), 13)
+		Gfx.jtext(self, "%s %d" % [Gfx.L("周回", "CYCLE"), Save.cycle], Vector2(20.0, 20.0), Pal.c("yellow"), 14)

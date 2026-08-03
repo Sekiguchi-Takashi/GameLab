@@ -47,6 +47,9 @@ var ai_t := 0.0
 var item_open := false
 var cur_item := ""
 var over_t := 0.0
+var line_txt := ""
+var line_t := 0.0
+var ally_lost := false
 var banner := ""
 var banner_t := 0.0
 
@@ -80,12 +83,17 @@ func _setup() -> void:
 		var lv := 1
 		if ee.size() > 4:
 			lv = maxi(int(ee[4]), 1)
+		lv += (Save.cycle - 1) * 2
 		if lv > 1:
 			eu["lv"] = lv
 			eu["mhp"] = int(eu["mhp"]) + (lv - 1) * 4
 			eu["hp"] = int(eu["mhp"])
 			eu["atk"] = int(eu["atk"]) + (lv - 1)
 			eu["def"] = int(eu["def"]) + int((lv - 1) / 2)
+		var mul: float = Save.diff_mul()
+		eu["mhp"] = maxi(int(float(int(eu["mhp"])) * mul), 5)
+		eu["hp"] = int(eu["mhp"])
+		eu["atk"] = maxi(int(float(int(eu["atk"])) * mul), 1)
 		if int(ee[3]) == 1:
 			eu["boss"] = true
 			eu["hp"] = int(eu["hp"]) + 14
@@ -110,6 +118,13 @@ func _setup() -> void:
 	q_wait(0.25)
 	_begin_round()
 	_banner(Maps.name_of(mapdef))
+	ally_lost = false
+	if String(mapdef["win"]) == "BOSS":
+		say(Gfx.L("ミラ|王冠の印。あれが敵将です。", "MIRA|THE CROWN MARK. THAT IS THE CAPTAIN."))
+	elif map_i == 11:
+		say(Gfx.L("ロラン|全員、生きて帰るぞ。", "ROLAND|ALL OF YOU. COME HOME ALIVE."))
+	elif String(mapdef["win"]) == "REACH":
+		say(Gfx.L("ロラン|光る地点まで走れ。討つ必要はない。", "ROLAND|RUN FOR THE GLOWING TILE."))
 
 func _push(u: Dictionary, team: int) -> void:
 	u["px"] = Vector2(float(u["x"]) * TS, float(u["y"]) * TS)
@@ -194,6 +209,10 @@ func _validate() -> void:
 	if lost > 0:
 		msg = "MAP WARNING %d FOES CUT OFF" % lost
 
+func say(t: String) -> void:
+	line_txt = t
+	line_t = 3.4
+
 func _banner(t: String) -> void:
 	banner = t
 	banner_t = 1.05
@@ -216,6 +235,7 @@ func _begin_round() -> void:
 	if over:
 		return
 	rnd += 1
+	Save.bump("turns", 1)
 	if String(mapdef["win"]) == "SURVIVE" and rnd > limit:
 		_finish(true)
 		return
@@ -577,15 +597,23 @@ func _damage(a: int, b: int, mult: float) -> void:
 	msg = "%d %s" % [dmg, Gfx.L("ダメージ", "DAMAGE")]
 	if crit:
 		msg = "%s %d" % [Gfx.L("会心", "CRITICAL"), dmg]
-	_gain_exp(a, 12)
+	_gain_exp(a, 14)
 	if int(ub["hp"]) <= 0:
+		if int(ub["team"]) == 0 and not ally_lost:
+			ally_lost = true
+			var nn := Units.label(String(ub["kind"]))
+			if ub.has("name"):
+				nn = String(ub["name"])
+			say(Gfx.L("ノエラ|%s さん！ しっかりして！" % nn, "NOELA|%s! STAY WITH US!" % nn))
 		msg = "%s %s" % [Units.label(String(ub["kind"])), Gfx.L("撃破", "DOWN")]
 		Sound.play("down")
-		if int(ub["team"]) == 1 and randf() < 0.34:
+		if int(ub["team"]) == 1:
+			Save.bump("kills", 1)
+		if int(ub["team"]) == 1 and randf() < 0.42:
 			var pool: Array = Units.DROPS
 			drops.append(String(pool[randi() % pool.size()]))
 			_banner(Gfx.L("戦利品を得た", "LOOT FOUND"))
-		_gain_exp(a, 30)
+		_gain_exp(a, 34)
 		queue.append({"k": "death", "u": b, "t": 0.0})
 
 func _step_anim(dt: float) -> void:
@@ -1040,6 +1068,8 @@ func _process(d: float) -> void:
 		banner_t = maxf(banner_t - d, 0.0)
 	if over:
 		over_t += d
+	if line_t > 0.0:
+		line_t = maxf(line_t - d, 0.0)
 	for u in units:
 		var uu: Dictionary = u
 		uu["flash"] = maxf(float(uu["flash"]) - d, 0.0)
@@ -1076,6 +1106,7 @@ func _draw() -> void:
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	fx.draw_flash(self, VIEW)
 	_draw_result()
+	_draw_line()
 	_draw_hud()
 	_draw_items()
 	_draw_banner()
@@ -1215,7 +1246,13 @@ func _draw_hud() -> void:
 	if show >= 0:
 		var u: Dictionary = units[show]
 		var st: Dictionary = Units.STATS[u["kind"]]
-		Gfx.jtext(self, "%s LV%d" % [Units.label(String(u["kind"])), int(u["lv"])], Vector2(6.0, 320.0), Pal.c("white"), 15)
+		var who := ""
+		if u.has("name"):
+			who = String(u["name"])
+		var nm2 := Units.label(String(u["kind"]))
+		if who != "":
+			nm2 = "%s %s" % [who, nm2]
+		Gfx.jtext(self, "%s LV%d" % [nm2, int(u["lv"])], Vector2(6.0, 320.0), Pal.c("white"), 15)
 		Gfx.text(self, "HP %d/%d  MP %d" % [int(u["hp"]), int(u["mhp"]), int(u["mp"])], Vector2(6.0, 338.0), Pal.c("lgreen"))
 		Gfx.text(self, "ATK %d" % int(u["atk"]), Vector2(126.0, 322.0), Pal.c("gray"))
 		Gfx.text(self, "DEF %d" % int(u["def"]), Vector2(126.0, 338.0), Pal.c("gray"))
@@ -1262,6 +1299,23 @@ func _draw_hud() -> void:
 		_panel(b2)
 		var nx := Gfx.L("次へ", "NEXT")
 		Gfx.jtext(self, nx, Vector2(b2.position.x + (b2.size.x - Gfx.jwidth(nx, 16)) * 0.5, b2.position.y + 6.0), Pal.c("white"), 16)
+
+func _draw_line() -> void:
+	if line_t <= 0.0 or line_txt == "":
+		return
+	var a: float = clampf(line_t / 0.5, 0.0, 1.0)
+	var who := ""
+	var body := line_txt
+	var bar := line_txt.find("|")
+	if bar >= 0:
+		who = line_txt.substr(0, bar)
+		body = line_txt.substr(bar + 1)
+	var r := Rect2(20.0, 258.0, 600.0, 46.0)
+	draw_rect(r, Color(0.05, 0.07, 0.11, 0.90 * a))
+	draw_rect(r, Color(0.62, 0.72, 0.88, a), false, 2.0)
+	if who != "":
+		Gfx.jtext(self, who, Vector2(r.position.x + 12.0, r.position.y + 4.0), Color(0.95, 0.80, 0.30, a), 14)
+	Gfx.jtext(self, body, Vector2(r.position.x + 12.0, r.position.y + 22.0), Color(1, 1, 1, a), 15)
 
 func _draw_result() -> void:
 	if not over:

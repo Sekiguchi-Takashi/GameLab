@@ -1,6 +1,7 @@
 extends Node
 
 const PATH := "user://save.json"
+const SLOTS := 3
 const TRACE := "user://trace.txt"
 
 var last_trace := ""
@@ -9,6 +10,10 @@ var map_index := 0
 var roster: Array = []
 var items: Dictionary = {"POTION": 3, "NUT": 2, "STONE": 3}
 var stash: Dictionary = {}
+var slot := 0
+var difficulty := 1
+var cycle := 1
+var stats: Dictionary = {"clears": 0, "turns": 0, "kills": 0, "maxlv": 1}
 
 func read_trace() -> void:
 	if not FileAccess.file_exists(TRACE):
@@ -43,11 +48,42 @@ func clear_trace() -> void:
 		f.store_string("")
 		f.close()
 
+func path_of(i: int) -> String:
+	return "user://save%d.json" % i
+
+func has_slot(i: int) -> bool:
+	return FileAccess.file_exists(path_of(i))
+
+func slot_info(i: int) -> Dictionary:
+	if not has_slot(i):
+		return {}
+	var f := FileAccess.open(path_of(i), FileAccess.READ)
+	if f == null:
+		return {}
+	var t: String = f.get_as_text()
+	f.close()
+	var j = JSON.parse_string(t)
+	if typeof(j) != TYPE_DICTIONARY:
+		return {}
+	return j
+
+func wipe(i: int) -> void:
+	if has_slot(i):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(path_of(i)))
+		var d := DirAccess.open("user://")
+		if d != null:
+			d.remove("save%d.json" % i)
+
 func has_save() -> bool:
-	return FileAccess.file_exists(PATH)
+	for i in SLOTS:
+		if has_slot(i):
+			return true
+	return false
 
 func new_game() -> void:
 	map_index = 0
+	cycle = 1
+	stats = {"clears": 0, "turns": 0, "kills": 0, "maxlv": 1}
 	items = {"POTION": 3, "NUT": 2, "STONE": 3}
 	stash = {}
 	roster = []
@@ -55,7 +91,13 @@ func new_game() -> void:
 		var u: Dictionary = Units.make(String(k), 0, 0, 0)
 		var e := _strip(u)
 		e["weapon"] = Units.starter(String(k))
+		e["name"] = Gfx.L(String(Units.HERO_JA[String(k)]), String(Units.HERO_EN[String(k)]))
 		roster.append(e)
+
+func _nm(u: Dictionary) -> String:
+	if u.has("name"):
+		return String(u["name"])
+	return ""
 
 func _wep(u: Dictionary) -> String:
 	if u.has("weapon"):
@@ -84,6 +126,7 @@ func _strip(u: Dictionary) -> Dictionary:
 	return {
 		"kind": String(u["kind"]),
 		"weapon": _wep(u),
+		"name": _nm(u),
 		"lv": _num(u, "lv", 1), "exp": _num(u, "exp", 0),
 		"hp": _num(u, "hp", 10), "mhp": _num(u, "mhp", 10),
 		"atk": _num(u, "atk", 5), "def": _num(u, "def", 3),
@@ -103,8 +146,9 @@ func store(u: Dictionary) -> void:
 	roster.append(s)
 
 func resupply() -> void:
-	items["POTION"] = int(items["POTION"]) + 1
-	items["STONE"] = int(items["STONE"]) + 1
+	items["POTION"] = int(items["POTION"]) + 2
+	items["STONE"] = int(items["STONE"]) + 2
+	items["NUT"] = int(items["NUT"]) + 1
 
 func rest() -> void:
 	for i in roster.size():
@@ -113,16 +157,19 @@ func rest() -> void:
 		r["mp"] = int(r["mmp"])
 
 func save_game() -> void:
-	var f := FileAccess.open(PATH, FileAccess.WRITE)
+	var f := FileAccess.open(path_of(slot), FileAccess.WRITE)
 	if f == null:
 		return
-	f.store_string(JSON.stringify({"map": map_index, "roster": roster, "items": items, "stash": stash}))
+	f.store_string(JSON.stringify({
+		"map": map_index, "roster": roster, "items": items, "stash": stash,
+		"diff": difficulty, "cycle": cycle, "stats": stats,
+	}))
 	f.close()
 
 func load_game() -> bool:
-	if not has_save():
+	if not has_slot(slot):
 		return false
-	var f := FileAccess.open(PATH, FileAccess.READ)
+	var f := FileAccess.open(path_of(slot), FileAccess.READ)
 	if f == null:
 		return false
 	var txt: String = f.get_as_text()
@@ -162,9 +209,61 @@ func load_game() -> bool:
 			var key: String = k
 			if it.has(key):
 				items[key] = int(it[key])
+	difficulty = 1
+	if d.has("diff"):
+		difficulty = int(d["diff"])
+	cycle = 1
+	if d.has("cycle"):
+		cycle = maxi(int(d["cycle"]), 1)
+	stats = {"clears": 0, "turns": 0, "kills": 0, "maxlv": 1}
+	if d.has("stats"):
+		var st: Dictionary = d["stats"]
+		for k in stats.keys():
+			var key: String = k
+			if st.has(key):
+				stats[key] = int(st[key])
+	for e2 in roster:
+		var ee: Dictionary = e2
+		if not ee.has("name") or String(ee["name"]) == "":
+			var kk: String = String(ee["kind"])
+			if Units.HERO_JA.has(kk):
+				ee["name"] = Gfx.L(String(Units.HERO_JA[kk]), String(Units.HERO_EN[kk]))
+			else:
+				ee["name"] = ""
 	if roster.is_empty():
 		new_game()
 	return true
+
+func diff_mul() -> float:
+	if difficulty == 0:
+		return 0.82
+	if difficulty == 2:
+		return 1.22
+	return 1.0
+
+func diff_label() -> String:
+	if difficulty == 0:
+		return Gfx.L("易しい", "EASY")
+	if difficulty == 2:
+		return Gfx.L("難しい", "HARD")
+	return Gfx.L("普通", "NORMAL")
+
+func bump(k: String, n: int) -> void:
+	if not stats.has(k):
+		stats[k] = 0
+	stats[k] = int(stats[k]) + n
+
+func raise_max(k: String, n: int) -> void:
+	if not stats.has(k) or int(stats[k]) < n:
+		stats[k] = n
+
+func new_plus() -> void:
+	map_index = 0
+	cycle += 1
+	for i in roster.size():
+		var r: Dictionary = roster[i]
+		r["hp"] = int(r["mhp"])
+		r["mp"] = int(r["mmp"])
 
 func make_unit(entry: Dictionary, x: int, y: int) -> Dictionary:
 	var u: Dictionary = Units.make(String(entry["kind"]), 0, x, y)

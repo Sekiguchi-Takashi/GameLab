@@ -54,8 +54,8 @@ func _draw() -> void:
 	if not traced:
 		traced = true
 		Save.trace("TDRAW")
-	draw_rect(Rect2(0.0, 0.0, 640.0, 360.0), Color(0.04, 0.05, 0.07, 1.0))
-	Gfx.jtext(self, title, Vector2(20.0, 20.0), Pal.c("cyan"), 17)
+	draw_rect(Rect2(0.0, 0.0, 1280.0, 720.0), Color(0.04, 0.05, 0.07, 1.0))
+	Gfx.jtext(self, title, Vector2(40.0, 40.0), Pal.c("cyan"), 30)
 	var wx := 20.0
 	var wy := 220.0
 	var ww := 600.0
@@ -71,15 +71,15 @@ func _draw() -> void:
 		who = raw.substr(0, bar)
 		body = raw.substr(bar + 1)
 	if who != "":
-		var nw := Gfx.jwidth(who, 15) + 20.0
+		var nw := Gfx.jwidth(who, 27) + 20.0
 		draw_rect(Rect2(wx + 12.0, wy - 18.0, nw, 22.0), Pal.c("panel"))
 		draw_rect(Rect2(wx + 12.0, wy - 18.0, nw, 22.0), Pal.c("yellow"), false, 2.0)
-		Gfx.jtext(self, who, Vector2(wx + 22.0, wy - 15.0), Pal.c("yellow"), 15)
+		Gfx.jtext(self, who, Vector2(wx + 22.0, wy - 15.0), Pal.c("yellow"), 27)
 	var n: int = clampi(int(shown), 0, body.length())
-	Gfx.jtext(self, body.substr(0, n), Vector2(wx + 20.0, wy + 30.0), Pal.c("white"), 17)
+	Gfx.jtext(self, body.substr(0, n), Vector2(wx + 20.0, wy + 30.0), Pal.c("white"), 30)
 	Gfx.text(self, "%d/%d" % [page + 1, lines.size()], Vector2(wx + ww - 46.0, wy + 8.0), Pal.c("dgray"))
 	if _full() and int(Time.get_ticks_msec() / 380) % 2 == 0:
 		var px := wx + ww - 24.0
 		var py := wy + wh - 18.0
 		draw_colored_polygon(PackedVector2Array([Vector2(px, py), Vector2(px + 10.0, py), Vector2(px + 5.0, py + 8.0)]), Pal.c("yellow"))
-	Gfx.jtext(self, Gfx.L("タップで進む", "TAP TO CONTINUE"), Vector2(20.0, 330.0), Pal.c("dgray"), 13)
+	Gfx.jtext(self, Gfx.L("タップで進む", "TAP TO CONTINUE"), Vector2(40.0, 660.0), Pal.c("dgray"), 24)

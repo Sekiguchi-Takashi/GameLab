@@ -33,11 +33,11 @@ func rows() -> int:
 	return 8
 
 func _row_rect(i: int) -> Rect2:
-	return Rect2(8.0, 44.0 + float(i) * 32.0, 624.0, 30.0)
+	return Rect2(8.0, 44.0 + float(i) * 64.0, 624.0, 30.0)
 
 func _btn(i: int) -> Rect2:
-	var w := 152.0
-	return Rect2(8.0 + float(i) * (w + 8.0), 322.0, w, 30.0)
+	var w := 304.0
+	return Rect2(8.0 + float(i) * (w + 16.0), 322.0, w, 30.0)
 
 func tap(p: Vector2) -> bool:
 	if _btn(0).has_point(p):
@@ -83,8 +83,8 @@ func _process(d: float) -> void:
 	queue_redraw()
 
 func _draw() -> void:
-	draw_rect(Rect2(0.0, 0.0, 640.0, 360.0), Color(0.04, 0.05, 0.07, 0.97))
-	Gfx.text(self, TITLE, Vector2(8.0, 10.0), Pal.c("white"))
+	draw_rect(Rect2(0.0, 0.0, 1280.0, 720.0), Color(0.04, 0.05, 0.07, 0.97))
+	Gfx.text(self, TITLE, Vector2(16.0, 20.0), Pal.c("white"))
 	var ok := 0
 	var ng := 0
 	for s in state:
@@ -92,8 +92,8 @@ func _draw() -> void:
 			ok += 1
 		elif int(s) == 2:
 			ng += 1
-	Gfx.text(self, "OK %d  NG %d  OF %d" % [ok, ng, ITEMS.size()], Vector2(430.0, 10.0), Pal.c("gray"))
-	Gfx.text(self, "TAP A ROW TO CYCLE  BLANK OK NG", Vector2(8.0, 24.0), Pal.c("dgray"))
+	Gfx.text(self, "OK %d  NG %d  OF %d" % [ok, ng, ITEMS.size()], Vector2(860.0, 20.0), Pal.c("gray"))
+	Gfx.text(self, "TAP A ROW TO CYCLE  BLANK OK NG", Vector2(16.0, 48.0), Pal.c("dgray"))
 	for i in rows():
 		var idx := top + i
 		if idx >= ITEMS.size():
@@ -115,7 +115,7 @@ func _draw() -> void:
 		Gfx.text(self, "%d %s" % [idx + 1, String(it["t"])], Vector2(r.position.x + 34.0, r.position.y + 4.0), Pal.c("white"))
 		Gfx.text(self, String(it["d"]), Vector2(r.position.x + 34.0, r.position.y + 17.0), Pal.c("dgray"))
 	if msg != "":
-		Gfx.text(self, msg, Vector2(8.0, 306.0), Pal.c("lgreen"))
+		Gfx.text(self, msg, Vector2(16.0, 612.0), Pal.c("lgreen"))
 	var labels: Array = ["UP", "DOWN", "COPY RESULT", "CLOSE"]
 	for i in labels.size():
 		var b := _btn(i)

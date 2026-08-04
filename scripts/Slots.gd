@@ -9,13 +9,13 @@ var note := ""
 var note_t := 0.0
 
 func _row(i: int) -> Rect2:
-	return Rect2(60.0, 70.0 + float(i) * 62.0, 520.0, 54.0)
+	return Rect2(60.0, 70.0 + float(i) * 124.0, 520.0, 54.0)
 
 func _dbtn(i: int) -> Rect2:
-	return Rect2(120.0 + float(i) * 140.0, 180.0, 128.0, 44.0)
+	return Rect2(120.0 + float(i) * 280.0, 180.0, 128.0, 44.0)
 
 func _btn(i: int) -> Rect2:
-	return Rect2(60.0 + float(i) * 270.0, 296.0, 250.0, 40.0)
+	return Rect2(60.0 + float(i) * 540.0, 296.0, 250.0, 40.0)
 
 func setup() -> void:
 	erase_mode = false
@@ -72,10 +72,10 @@ func _process(d: float) -> void:
 	queue_redraw()
 
 func _draw() -> void:
-	draw_rect(Rect2(0.0, 0.0, 640.0, 360.0), Color(0.05, 0.06, 0.09, 1.0))
+	draw_rect(Rect2(0.0, 0.0, 1280.0, 720.0), Color(0.05, 0.06, 0.09, 1.0))
 	if pick_diff >= 0:
 		var t := Gfx.L("難易度を選ぶ", "CHOOSE DIFFICULTY")
-		Gfx.jtext(self, t, Vector2(320.0 - Gfx.jwidth(t, 20) * 0.5, 110.0), Pal.c("white"), 20)
+		Gfx.jtext(self, t, Vector2(640.0 - Gfx.jwidth(t, 36) * 0.5, 220.0), Pal.c("white"), 36)
 		var labels: Array = [Gfx.L("易しい", "EASY"), Gfx.L("普通", "NORMAL"), Gfx.L("難しい", "HARD")]
 		var notes: Array = [Gfx.L("敵が弱い", "FOES WEAKER"), Gfx.L("標準", "STANDARD"), Gfx.L("敵が強い", "FOES STRONGER")]
 		for i in 3:
@@ -83,16 +83,16 @@ func _draw() -> void:
 			draw_rect(b, Pal.c("panel"))
 			draw_rect(b, Pal.c("line"), false, 2.0)
 			var s: String = labels[i]
-			Gfx.jtext(self, s, Vector2(b.position.x + (b.size.x - Gfx.jwidth(s, 17)) * 0.5, b.position.y + 4.0), Pal.c("white"), 17)
+			Gfx.jtext(self, s, Vector2(b.position.x + (b.size.x - Gfx.jwidth(s, 30)) * 0.5, b.position.y + 4.0), Pal.c("white"), 30)
 			var s2: String = notes[i]
-			Gfx.jtext(self, s2, Vector2(b.position.x + (b.size.x - Gfx.jwidth(s2, 12)) * 0.5, b.position.y + 26.0), Pal.c("gray"), 12)
+			Gfx.jtext(self, s2, Vector2(b.position.x + (b.size.x - Gfx.jwidth(s2, 40)) * 0.5, b.position.y + 26.0), Pal.c("gray"), 40)
 		var bb := _btn(1)
 		draw_rect(bb, Pal.c("panel"))
 		draw_rect(bb, Pal.c("line"), false, 2.0)
-		Gfx.jtext(self, Gfx.L("戻る", "BACK"), Vector2(bb.position.x + 100.0, bb.position.y + 10.0), Pal.c("white"), 16)
+		Gfx.jtext(self, Gfx.L("戻る", "BACK"), Vector2(bb.position.x + 100.0, bb.position.y + 10.0), Pal.c("white"), 28)
 		return
 	var ttl := Gfx.L("記録の選択", "SELECT A FILE")
-	Gfx.jtext(self, ttl, Vector2(60.0, 28.0), Pal.c("white"), 20)
+	Gfx.jtext(self, ttl, Vector2(120.0, 56.0), Pal.c("white"), 36)
 	for i in Save.SLOTS:
 		var r := _row(i)
 		draw_rect(r, Pal.c("panel"))
@@ -100,9 +100,9 @@ func _draw() -> void:
 		if erase_mode and Save.has_slot(i):
 			edge = Pal.c("red")
 		draw_rect(r, edge, false, 2.0)
-		Gfx.jtext(self, "%s %d" % [Gfx.L("記録", "FILE"), i + 1], Vector2(r.position.x + 12.0, r.position.y + 6.0), Pal.c("cyan"), 16)
+		Gfx.jtext(self, "%s %d" % [Gfx.L("記録", "FILE"), i + 1], Vector2(r.position.x + 12.0, r.position.y + 6.0), Pal.c("cyan"), 28)
 		if not Save.has_slot(i):
-			Gfx.jtext(self, Gfx.L("空き", "EMPTY"), Vector2(r.position.x + 120.0, r.position.y + 16.0), Pal.c("dgray"), 15)
+			Gfx.jtext(self, Gfx.L("空き", "EMPTY"), Vector2(r.position.x + 120.0, r.position.y + 16.0), Pal.c("dgray"), 27)
 			continue
 		var info: Dictionary = Save.slot_info(i)
 		var mi := 0
@@ -117,12 +117,12 @@ func _draw() -> void:
 			for e in rr:
 				var ee: Dictionary = e
 				lvs += "%d " % int(ee["lv"])
-		Gfx.jtext(self, "%s %d / 12" % [Gfx.L("戦い", "BATTLE"), mini(mi + 1, 12)], Vector2(r.position.x + 120.0, r.position.y + 6.0), Pal.c("white"), 15)
+		Gfx.jtext(self, "%s %d / 12" % [Gfx.L("戦い", "BATTLE"), mini(mi + 1, 40)], Vector2(r.position.x + 120.0, r.position.y + 6.0), Pal.c("white"), 27)
 		Gfx.text(self, "LV " + lvs, Vector2(r.position.x + 120.0, r.position.y + 30.0), Pal.c("gray"))
 		if cyc > 1:
-			Gfx.jtext(self, "%d %s" % [cyc, Gfx.L("周目", "CYCLE")], Vector2(r.position.x + 420.0, r.position.y + 6.0), Pal.c("yellow"), 15)
+			Gfx.jtext(self, "%d %s" % [cyc, Gfx.L("周目", "CYCLE")], Vector2(r.position.x + 420.0, r.position.y + 6.0), Pal.c("yellow"), 27)
 	if note != "":
-		Gfx.jtext(self, note, Vector2(60.0, 262.0), Pal.c("lgreen"), 14)
+		Gfx.jtext(self, note, Vector2(120.0, 524.0), Pal.c("lgreen"), 26)
 	var lb: Array = [Gfx.L("消去", "ERASE"), Gfx.L("戻る", "BACK")]
 	for i in 2:
 		var b2 := _btn(i)
@@ -132,4 +132,4 @@ func _draw() -> void:
 			e2 = Pal.c("red")
 		draw_rect(b2, e2, false, 2.0)
 		var s3: String = lb[i]
-		Gfx.jtext(self, s3, Vector2(b2.position.x + (b2.size.x - Gfx.jwidth(s3, 16)) * 0.5, b2.position.y + 9.0), Pal.c("white"), 16)
+		Gfx.jtext(self, s3, Vector2(b2.position.x + (b2.size.x - Gfx.jwidth(s3, 28)) * 0.5, b2.position.y + 9.0), Pal.c("white"), 28)

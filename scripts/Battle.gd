@@ -4,8 +4,8 @@ signal finished(win: bool)
 
 enum Sub { MOVE, TARGET, SKILL, ITEM }
 
-const VIEW := Rect2(0.0, 20.0, 640.0, 296.0)
-const TS := 32.0
+const VIEW := Rect2(0.0, 40.0, 1280.0, 592.0)
+const TS := 64.0
 const WALK := 0.13
 const LUNGE := 0.46
 
@@ -591,13 +591,13 @@ func _damage(a: int, b: int, mult: float) -> void:
 	ub["hp"] = maxi(int(ub["hp"]) - dmg, 0)
 	ub["flash"] = 0.22
 	var dv: Vector2 = (Vector2(ub["px"]) - Vector2(ua["px"])).normalized()
-	ub["nudge"] = dv * 7.0
+	ub["nudge"] = dv * 14.0
 	fx.hit(Vector2(ub["px"]), dmg, crit)
 	Sound.play("hit")
 	msg = "%d %s" % [dmg, Gfx.L("ダメージ", "DAMAGE")]
 	if crit:
 		msg = "%s %d" % [Gfx.L("会心", "CRITICAL"), dmg]
-	_gain_exp(a, 14)
+	_gain_exp(a, 26)
 	if int(ub["hp"]) <= 0:
 		if int(ub["team"]) == 0 and not ally_lost:
 			ally_lost = true
@@ -674,7 +674,7 @@ func _step_anim(dt: float) -> void:
 		var p3: float = clampf(t / LUNGE, 0.0, 1.0)
 		if t < dt * 1.5:
 			Sound.play("slash")
-		ua["px"] = home + dv2 * sin(p3 * PI) * 11.0
+		ua["px"] = home + dv2 * sin(p3 * PI) * 22.0
 		if t >= LUNGE * 0.32 and not bool(anim["done"]):
 			anim["done"] = true
 			_face_to(ai, bi)
@@ -717,7 +717,7 @@ func _step_anim(dt: float) -> void:
 			fx.heal_pop(Vector2(uh["px"]), int(uh["hp"]) - before)
 			msg = "%s %d" % [Gfx.L("回復", "HEAL"), int(uh["hp"]) - before]
 			Sound.play("heal")
-			_gain_exp(ha, 14)
+			_gain_exp(ha, 26)
 		if t >= 0.5:
 			anim = {}
 		return
@@ -735,7 +735,7 @@ func _step_anim(dt: float) -> void:
 
 func _follow(p: Vector2) -> void:
 	var s := p - cam + VIEW.position
-	var m := 74.0
+	var m := 148.0
 	if s.x < VIEW.position.x + m:
 		cam.x -= (VIEW.position.x + m - s.x)
 	if s.x > VIEW.end.x - m:
@@ -837,10 +837,10 @@ func _cell(p: Vector2) -> Vector2i:
 	return Vector2i(int(w.x / TS), int(w.y / TS))
 
 func _btn(i: int) -> Rect2:
-	return Rect2(278.0 + float(i) * 91.0, 322.0, 85.0, 30.0)
+	return Rect2(556.0 + float(i) * 182.0, 644.0, 170.0, 60.0)
 
 func _item_row(i: int) -> Rect2:
-	return Rect2(278.0, 224.0 + float(i) * 30.0, 267.0, 28.0)
+	return Rect2(556.0, 448.0 + float(i) * 60.0, 534.0, 56.0)
 
 func _my_turn() -> bool:
 	return not over and active >= 0 and int(units[active]["team"]) == 0 and not busy()
@@ -1073,7 +1073,7 @@ func _process(d: float) -> void:
 	for u in units:
 		var uu: Dictionary = u
 		uu["flash"] = maxf(float(uu["flash"]) - d, 0.0)
-		uu["nudge"] = Vector2(uu["nudge"]).move_toward(Vector2.ZERO, 60.0 * d)
+		uu["nudge"] = Vector2(uu["nudge"]).move_toward(Vector2.ZERO, 120.0 * d)
 		uu["hpv"] = move_toward(float(uu["hpv"]), float(uu["hp"]), maxf(float(uu["mhp"]) * 1.6, 12.0) * d)
 	if dt > 0.0:
 		_step_anim(dt)
@@ -1165,9 +1165,9 @@ func _draw_units() -> void:
 		if float(u["fade"]) <= 0.0:
 			continue
 		var sp: Vector2 = Vector2(u["px"]) + Vector2(u["nudge"]) - cam + VIEW.position
-		if sp.x < VIEW.position.x - 64.0 or sp.x > VIEW.end.x + 64.0:
+		if sp.x < VIEW.position.x - 128.0 or sp.x > VIEW.end.x + 128.0:
 			continue
-		if sp.y < VIEW.position.y - 64.0 or sp.y > VIEW.end.y + 64.0:
+		if sp.y < VIEW.position.y - 128.0 or sp.y > VIEW.end.y + 128.0:
 			continue
 		var frame := 0
 		var moving := false
@@ -1181,7 +1181,7 @@ func _draw_units() -> void:
 			frame = 1
 		var nm := "%s%d" % [u["kind"], frame]
 		var flip: bool = int(u["face"]) < 0
-		var dst := Rect2(sp.x - 8.0, sp.y - 16.0, 48.0, 48.0)
+		var dst := Rect2(sp.x - 16.0, sp.y - 32.0, 96.0, 96.0)
 		var tint := Color(1, 1, 1, float(u["fade"]))
 		if bool(u["acted"]) and int(u["hp"]) > 0:
 			tint = Color(0.56, 0.62, 0.72, float(u["fade"]))
@@ -1191,19 +1191,19 @@ func _draw_units() -> void:
 		if int(u["hp"]) > 0:
 			var ratio: float = float(u["hp"]) / float(u["mhp"])
 			var vr: float = clampf(float(u["hpv"]) / float(u["mhp"]), 0.0, 1.0)
-			draw_rect(Rect2(sp.x + 3.0, sp.y + 27.0, 26.0, 4.0), Color(0, 0, 0, 0.75))
+			draw_rect(Rect2(sp.x + 6.0, sp.y + 54.0, 52.0, 8.0), Color(0, 0, 0, 0.75))
 			if vr > ratio:
-				draw_rect(Rect2(sp.x + 4.0, sp.y + 28.0, 24.0 * vr, 2.0), Pal.c("red"))
+				draw_rect(Rect2(sp.x + 8.0, sp.y + 56.0, 48.0 * vr, 4.0), Pal.c("red"))
 			else:
-				draw_rect(Rect2(sp.x + 4.0, sp.y + 28.0, 24.0 * vr, 2.0), Pal.c("lgreen"))
-			draw_rect(Rect2(sp.x + 4.0, sp.y + 28.0, 24.0 * ratio, 2.0), Pal.team(int(u["team"])))
+				draw_rect(Rect2(sp.x + 8.0, sp.y + 56.0, 48.0 * vr, 4.0), Pal.c("lgreen"))
+			draw_rect(Rect2(sp.x + 8.0, sp.y + 56.0, 48.0 * ratio, 4.0), Pal.team(int(u["team"])))
 			if bool(u["guard"]):
-				draw_rect(Rect2(sp.x + 2.0, sp.y - 2.0, 6.0, 6.0), Pal.c("cyan"))
+				draw_rect(Rect2(sp.x + 4.0, sp.y - 4.0, 12.0, 12.0), Pal.c("cyan"))
 			if bool(u["boss"]):
-				draw_rect(Rect2(sp.x + 12.0, sp.y - 20.0, 8.0, 4.0), Pal.c("yellow"))
+				draw_rect(Rect2(sp.x + 24.0, sp.y - 40.0, 16.0, 8.0), Pal.c("yellow"))
 			var fd: Vector2i = u["dir"]
-			var ctr := Vector2(sp.x + 16.0, sp.y + 34.0)
-			draw_line(ctr, ctr + Vector2(float(fd.x), float(fd.y)) * 9.0, Pal.c("white"), 1.0)
+			var ctr := Vector2(sp.x + 32.0, sp.y + 68.0)
+			draw_line(ctr, ctr + Vector2(float(fd.x), float(fd.y)) * 18.0, Pal.c("white"), 2.0)
 	if active >= 0 and int(units[active]["hp"]) > 0:
 		var s: Dictionary = units[active]
 		var rs := _tile_rect(int(s["x"]), int(s["y"]))
@@ -1219,9 +1219,9 @@ func _panel(r: Rect2) -> void:
 	draw_rect(Rect2(r.position.x, r.position.y + r.size.y - 1.0, r.size.x, 1.0), Color(0, 0, 0, 0.35))
 
 func _draw_hud() -> void:
-	_panel(Rect2(0.0, 0.0, 640.0, 20.0))
-	Gfx.text(self, "R%d" % rnd, Vector2(4.0, 6.0), Pal.c("white"))
-	var x := 36.0
+	_panel(Rect2(0.0, 0.0, 1280.0, 40.0))
+	Gfx.text(self, "R%d" % rnd, Vector2(8.0, 12.0), Pal.c("white"))
+	var x := 72.0
 	var shown := 0
 	var idx := oi
 	while idx < order.size() and shown < 6:
@@ -1230,15 +1230,15 @@ func _draw_hud() -> void:
 			var lab: String = String(units[ui]["kind"]).substr(0, 3)
 			var col: Color = Pal.team(int(units[ui]["team"]))
 			if shown == 0:
-				Gfx.text(self, ">", Vector2(x - 6.0, 6.0), Pal.c("yellow"))
-			Gfx.text(self, lab, Vector2(x, 6.0), col)
-			x += 26.0
+				Gfx.text(self, ">", Vector2(x - 12.0, 12.0), Pal.c("yellow"))
+			Gfx.text(self, lab, Vector2(x, 12.0), col)
+			x += 52.0
 			shown += 1
 		idx += 1
-	Gfx.jtext(self, msg, Vector2(228.0, 3.0), Pal.c("yellow"), 14)
-	Gfx.jtext(self, Maps.win_text(mapdef), Vector2(448.0, 3.0), Pal.c("cyan"), 14)
+	Gfx.jtext(self, msg, Vector2(456.0, 8.0), Pal.c("yellow"), 26)
+	Gfx.jtext(self, Maps.win_text(mapdef), Vector2(896.0, 8.0), Pal.c("cyan"), 26)
 
-	_panel(Rect2(0.0, 316.0, 640.0, 44.0))
+	_panel(Rect2(0.0, 632.0, 1280.0, 88.0))
 	var show := active
 	if show >= 0:
 		var u: Dictionary = units[show]
@@ -1249,16 +1249,16 @@ func _draw_hud() -> void:
 		var nm2 := Units.label(String(u["kind"]))
 		if who != "":
 			nm2 = "%s %s" % [who, nm2]
-		Gfx.jtext(self, "%s LV%d" % [nm2, int(u["lv"])], Vector2(6.0, 320.0), Pal.c("white"), 15)
-		Gfx.text(self, "HP %d/%d  MP %d" % [int(u["hp"]), int(u["mhp"]), int(u["mp"])], Vector2(6.0, 338.0), Pal.c("lgreen"))
-		Gfx.text(self, "ATK %d" % int(u["atk"]), Vector2(126.0, 322.0), Pal.c("gray"))
-		Gfx.text(self, "DEF %d" % int(u["def"]), Vector2(126.0, 338.0), Pal.c("gray"))
-		Gfx.text(self, "MOV %d" % int(u["mov"]), Vector2(196.0, 322.0), Pal.c("gray"))
-		Gfx.text(self, "RNG %d" % eff_rng(show), Vector2(196.0, 338.0), Pal.c("gray"))
-		Gfx.text(self, "EXP %d" % int(u["exp"]), Vector2(266.0, 322.0), Pal.c("cyan"))
+		Gfx.jtext(self, "%s LV%d" % [nm2, int(u["lv"])], Vector2(12.0, 640.0), Pal.c("white"), 26)
+		Gfx.text(self, "HP %d/%d  MP %d" % [int(u["hp"]), int(u["mhp"]), int(u["mp"])], Vector2(12.0, 664.0), Pal.c("lgreen"))
+		Gfx.text(self, "ATK %d" % int(u["atk"]), Vector2(300.0, 644.0), Pal.c("gray"))
+		Gfx.text(self, "DEF %d" % int(u["def"]), Vector2(300.0, 668.0), Pal.c("gray"))
+		Gfx.text(self, "MOV %d" % int(u["mov"]), Vector2(400.0, 644.0), Pal.c("gray"))
+		Gfx.text(self, "RNG %d" % eff_rng(show), Vector2(400.0, 668.0), Pal.c("gray"))
+		Gfx.text(self, "EXP %d" % int(u["exp"]), Vector2(500.0, 644.0), Pal.c("cyan"))
 		if pending >= 0:
 			if sub == Sub.SKILL and _skill_of(active) == "HEAL":
-				Gfx.text(self, "HEAL", Vector2(266.0, 338.0), Pal.c("lgreen"))
+				Gfx.text(self, "HEAL", Vector2(500.0, 668.0), Pal.c("lgreen"))
 			else:
 				var mult := 1.0
 				if sub == Sub.SKILL:
@@ -1267,7 +1267,7 @@ func _draw_hud() -> void:
 						mult = 1.3
 					elif sk == "BLAST":
 						mult = 0.9
-				Gfx.text(self, "%d DMG %s" % [forecast(active, pending, mult), flank_name(active, pending)], Vector2(266.0, 338.0), Pal.c("orange"))
+				Gfx.text(self, "%d DMG %s" % [forecast(active, pending, mult), flank_name(active, pending)], Vector2(500.0, 668.0), Pal.c("orange"))
 	if not over and active >= 0 and int(units[active]["team"]) == 0:
 		var lbls: Array = [Gfx.L("攻撃", "ATTACK"), Units.skill_label(_skill_of(active)), Gfx.L("道具", "ITEM"), Gfx.L("待機", "WAIT")]
 		if String(lbls[1]) == "":
@@ -1290,12 +1290,12 @@ func _draw_hud() -> void:
 				var g: float = 0.5 + 0.5 * sin(float(Time.get_ticks_msec()) * 0.008)
 				draw_rect(b, Color(0.95, 0.80, 0.25, 0.18 + 0.22 * g))
 				draw_rect(b, Color(0.98, 0.86, 0.35, 0.5 + 0.5 * g), false, 2.0)
-			Gfx.jtext(self, s2, Vector2(b.position.x + (b.size.x - Gfx.jwidth(s2, 16)) * 0.5, b.position.y + 6.0), lc, 16)
+			Gfx.jtext(self, s2, Vector2(b.position.x + (b.size.x - Gfx.jwidth(s2, 28)) * 0.5, b.position.y + 14.0), lc, 28)
 	elif over:
 		var b2 := _btn(3)
 		_panel(b2)
 		var nx := Gfx.L("次へ", "NEXT")
-		Gfx.jtext(self, nx, Vector2(b2.position.x + (b2.size.x - Gfx.jwidth(nx, 16)) * 0.5, b2.position.y + 6.0), Pal.c("white"), 16)
+		Gfx.jtext(self, nx, Vector2(b2.position.x + (b2.size.x - Gfx.jwidth(nx, 28)) * 0.5, b2.position.y + 6.0), Pal.c("white"), 28)
 
 func _draw_line() -> void:
 	if line_t <= 0.0 or line_txt == "":
@@ -1307,12 +1307,12 @@ func _draw_line() -> void:
 	if bar >= 0:
 		who = line_txt.substr(0, bar)
 		body = line_txt.substr(bar + 1)
-	var r := Rect2(20.0, 258.0, 600.0, 46.0)
+	var r := Rect2(40.0, 516.0, 1200.0, 92.0)
 	draw_rect(r, Color(0.05, 0.07, 0.11, 0.90 * a))
 	draw_rect(r, Color(0.62, 0.72, 0.88, a), false, 2.0)
 	if who != "":
-		Gfx.jtext(self, who, Vector2(r.position.x + 12.0, r.position.y + 4.0), Color(0.95, 0.80, 0.30, a), 14)
-	Gfx.jtext(self, body, Vector2(r.position.x + 12.0, r.position.y + 22.0), Color(1, 1, 1, a), 15)
+		Gfx.jtext(self, who, Vector2(r.position.x + 24.0, r.position.y + 8.0), Color(0.95, 0.80, 0.30, a), 26)
+	Gfx.jtext(self, body, Vector2(r.position.x + 24.0, r.position.y + 44.0), Color(1, 1, 1, a), 26)
 
 func _draw_result() -> void:
 	if not over:
@@ -1330,9 +1330,9 @@ func _draw_result() -> void:
 				var d2: Dictionary = uu
 				if int(d2["team"]) != 0 or int(d2["hp"]) <= 0:
 					continue
-				var tx: float = 90.0 + float(n) * 96.0
-				var ty: float = 150.0 - 20.0 * clampf(g * 3.0 - float(n) * 0.4, 0.0, 1.0)
-				Gfx.draw_unit(self, "%s0" % String(d2["kind"]), false, Rect2(tx, ty, 64.0, 64.0), Color(1, 1, 1, clampf(g * 3.0 - float(n) * 0.4, 0.0, 1.0)))
+				var tx: float = 180.0 + float(n) * 200.0
+				var ty: float = 300.0 - 40.0 * clampf(g * 3.0 - float(n) * 0.4, 0.0, 1.0)
+				Gfx.draw_unit(self, "%s0" % String(d2["kind"]), false, Rect2(tx, ty, 128.0, 128.0), Color(1, 1, 1, clampf(g * 3.0 - float(n) * 0.4, 0.0, 1.0)))
 				n += 1
 	else:
 		var u2: float = clampf(over_t / 1.2, 0.0, 1.0)
@@ -1349,15 +1349,15 @@ func _draw_items() -> void:
 		var col: Color = Pal.c("white")
 		if n <= 0:
 			col = Pal.c("dgray")
-		Gfx.jtext(self, "%s  x%d" % [Units.item_label(k), n], Vector2(r.position.x + 10.0, r.position.y + 5.0), col, 15)
+		Gfx.jtext(self, "%s  x%d" % [Units.item_label(k), n], Vector2(r.position.x + 20.0, r.position.y + 12.0), col, 26)
 
 func _draw_banner() -> void:
 	if banner_t <= 0.0:
 		return
 	var a: float = clampf(banner_t / 0.35, 0.0, 1.0)
-	var w := Gfx.jwidth(banner, 18) + 40.0
-	var r := Rect2(320.0 - w * 0.5, 146.0, w, 34.0)
+	var w := Gfx.jwidth(banner, 32) + 80.0
+	var r := Rect2(640.0 - w * 0.5, 292.0, w, 60.0)
 	draw_rect(r, Color(0.05, 0.07, 0.10, 0.86 * a))
 	var y: Color = Pal.c("yellow")
 	draw_rect(r, Color(y.r, y.g, y.b, a), false, 2.0)
-	Gfx.jtext(self, banner, Vector2(320.0 - Gfx.jwidth(banner, 18) * 0.5, 152.0), Color(1, 1, 1, a), 18)
+	Gfx.jtext(self, banner, Vector2(640.0 - Gfx.jwidth(banner, 32) * 0.5, 306.0), Color(1, 1, 1, a), 32)

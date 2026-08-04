@@ -205,26 +205,26 @@ func _unhandled_input(e: InputEvent) -> void:
 			_show(S.TITLE)
 
 func _end_btn() -> Rect2:
-	return Rect2(200.0, 300.0, 240.0, 34.0)
+	return Rect2(400.0, 600.0, 480.0, 68.0)
 
 func _process(_d: float) -> void:
 	queue_redraw()
 
 func _draw() -> void:
 	if state == S.END:
-		draw_rect(Rect2(0.0, 0.0, 640.0, 360.0), Color(0.05, 0.06, 0.09, 1.0))
+		draw_rect(Rect2(0.0, 0.0, 1280.0, 720.0), Color(0.05, 0.06, 0.09, 1.0))
 		var n := 0
 		for e in Save.roster:
 			var ee: Dictionary = e
-			Gfx.draw_unit(self, "%s0" % String(ee["kind"]), false, Rect2(70.0 + float(n) * 100.0, 210.0, 72.0, 72.0), Color(1, 1, 1, 1))
+			Gfx.draw_unit(self, "%s0" % String(ee["kind"]), false, Rect2(70.0 + float(n) * 200.0, 210.0, 72.0, 72.0), Color(1, 1, 1, 1))
 			n += 1
 		var b := _end_btn()
 		draw_rect(b, Pal.c("panel"))
 		draw_rect(b, Pal.c("yellow"), false, 2.0)
 		var bs := Gfx.L("引き継いで最初から", "NEW GAME PLUS")
-		Gfx.jtext(self, bs, Vector2(b.position.x + (b.size.x - Gfx.jwidth(bs, 15)) * 0.5, b.position.y + 8.0), Pal.c("white"), 15)
+		Gfx.jtext(self, bs, Vector2(b.position.x + (b.size.x - Gfx.jwidth(bs, 27)) * 0.5, b.position.y + 8.0), Pal.c("white"), 27)
 		var t := Gfx.L("すべての戦いを終えた", "ALL BATTLES CLEARED")
-		Gfx.jtext(self, t, Vector2(320.0 - Gfx.jwidth(t, 18) * 0.5, 146.0), Pal.c("yellow"), 18)
+		Gfx.jtext(self, t, Vector2(640.0 - Gfx.jwidth(t, 32) * 0.5, 292.0), Pal.c("yellow"), 32)
 		var t2 := Gfx.L("画面をタップでタイトルへ", "TAP TO RETURN TO TITLE")
-		Gfx.jtext(self, t2, Vector2(320.0 - Gfx.jwidth(t2, 13) * 0.5, 182.0), Pal.c("gray"), 13)
-		Gfx.jtext(self, "%s %d" % [Gfx.L("周回", "CYCLE"), Save.cycle], Vector2(20.0, 20.0), Pal.c("yellow"), 14)
+		Gfx.jtext(self, t2, Vector2(640.0 - Gfx.jwidth(t2, 24) * 0.5, 364.0), Pal.c("gray"), 24)
+		Gfx.jtext(self, "%s %d" % [Gfx.L("周回", "CYCLE"), Save.cycle], Vector2(40.0, 40.0), Pal.c("yellow"), 26)

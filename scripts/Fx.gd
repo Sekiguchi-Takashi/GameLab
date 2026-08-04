@@ -69,7 +69,7 @@ func tick(d: float) -> float:
 	return d
 
 func _s(p: Vector2, cam: Vector2, view: Rect2) -> Vector2:
-	return p - cam + view.position + Vector2(16.0, 16.0)
+	return p - cam + view.position + Vector2(32.0, 32.0)
 
 func draw_efx(ci: CanvasItem, cam: Vector2, view: Rect2) -> void:
 	for e in efx:
@@ -154,8 +154,8 @@ func draw_pops(ci: CanvasItem, cam: Vector2, view: Rect2) -> void:
 		if heal:
 			txt = "+" + txt
 		if crit:
-			Gfx.jtext(ci, txt, sp + Vector2(-4.0, -6.0), col, 22)
-			Gfx.text(ci, "!", sp + Vector2(20.0, 0.0), col)
+			Gfx.jtext(ci, txt, sp + Vector2(-8.0, -12.0), col, 40)
+			Gfx.text(ci, "!", sp + Vector2(40.0, 0.0), col)
 		else:
 			Gfx.text(ci, txt, sp, col)
 

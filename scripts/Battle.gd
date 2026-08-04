@@ -318,7 +318,7 @@ func _next_unit() -> void:
 const FACE_DIRS := [Vector2i(0, 1), Vector2i(-1, 0), Vector2i(0, -1), Vector2i(1, 0)]
 
 func _face_btn(i: int) -> Rect2:
-	return Rect2(556.0 + float(i) * 140.0, 644.0, 128.0, 60.0)
+	return Rect2(556.0 + float(i) * 182.0, 644.0, 170.0, 60.0)
 
 func _end_unit() -> void:
 	if active >= 0:
@@ -880,6 +880,22 @@ func _tap(p: Vector2) -> void:
 	if int(units[active]["team"]) != 0:
 		return
 	var u: Dictionary = units[active]
+	if sub == Sub.FACE:
+		for i in 4:
+			if _face_btn(i).has_point(p):
+				_confirm_face(FACE_DIRS[i])
+				return
+		var c2 := _cell(p)
+		if board.inside(c2.x, c2.y):
+			var u2: Dictionary = units[active]
+			var dx: int = c2.x - int(u2["x"])
+			var dy: int = c2.y - int(u2["y"])
+			if dx != 0 or dy != 0:
+				if absi(dx) >= absi(dy):
+					_confirm_face(Vector2i(signi(dx), 0))
+				else:
+					_confirm_face(Vector2i(0, signi(dy)))
+		return
 
 	if _btn(0).has_point(p):
 		Sound.play("select")
@@ -900,22 +916,6 @@ func _tap(p: Vector2) -> void:
 	if _btn(1).has_point(p):
 		Sound.play("select")
 		_open_skill()
-		return
-	if sub == Sub.FACE:
-		for i in 4:
-			if _face_btn(i).has_point(p):
-				_confirm_face(FACE_DIRS[i])
-				return
-		var c2 := _cell(p)
-		if board.inside(c2.x, c2.y):
-			var u2: Dictionary = units[active]
-			var dx: int = c2.x - int(u2["x"])
-			var dy: int = c2.y - int(u2["y"])
-			if dx != 0 or dy != 0:
-				if absi(dx) >= absi(dy):
-					_confirm_face(Vector2i(signi(dx), 0))
-				else:
-					_confirm_face(Vector2i(0, signi(dy)))
 		return
 	if item_open:
 		for i in Units.ITEMS.size():

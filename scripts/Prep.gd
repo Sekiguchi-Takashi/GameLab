@@ -88,11 +88,9 @@ func _draw() -> void:
 	Gfx.jtext(self, Gfx.L("装備と昇格。", "GEAR AND PROMOTION."), Vector2(880.0, 392.0), Pal.c("cyan"), 24)
 	_mark("D3")
 	var it := "%s %d  %s %d  %s %d" % [Units.item_label("POTION"), int(Save.items["POTION"]), Units.item_label("NUT"), int(Save.items["NUT"]), Units.item_label("STONE"), int(Save.items["STONE"])]
-	Gfx.jtext(self, it, Vector2(32.0, 592.0), Pal.c("lgreen"), 26)
+	Gfx.jtext(self, it, Vector2(32.0, 632.0), Pal.c("lgreen"), 26)
 	if note != "":
-		Gfx.jtext(self, note, Vector2(32.0, 636.0), Pal.c("yellow"), 26)
-	Gfx.jtext(self, Gfx.L("戦闘前にHPとMPは", "HP AND MP ARE"), Vector2(880.0, 232.0), Pal.c("gray"), 24)
-	Gfx.jtext(self, Gfx.L("全回復する。", "RESTORED BEFORE EACH BATTLE."), Vector2(880.0, 272.0), Pal.c("gray"), 24)
+		Gfx.jtext(self, note, Vector2(32.0, 676.0), Pal.c("yellow"), 26)
 	_mark("D4")
 	var b := _btn_go()
 	draw_rect(b, Pal.c("panel"))

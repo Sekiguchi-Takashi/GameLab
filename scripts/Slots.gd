@@ -9,13 +9,13 @@ var note := ""
 var note_t := 0.0
 
 func _row(i: int) -> Rect2:
-	return Rect2(60.0, 70.0 + float(i) * 124.0, 520.0, 54.0)
+	return Rect2(120.0, 176.0 + float(i) * 132.0, 1040.0, 112.0)
 
 func _dbtn(i: int) -> Rect2:
-	return Rect2(120.0 + float(i) * 280.0, 180.0, 128.0, 44.0)
+	return Rect2(240.0 + float(i) * 280.0, 320.0, 256.0, 88.0)
 
 func _btn(i: int) -> Rect2:
-	return Rect2(60.0 + float(i) * 540.0, 296.0, 250.0, 40.0)
+	return Rect2(120.0 + float(i) * 540.0, 604.0, 500.0, 80.0)
 
 func setup() -> void:
 	erase_mode = false
@@ -92,7 +92,7 @@ func _draw() -> void:
 		Gfx.jtext(self, Gfx.L("戻る", "BACK"), Vector2(bb.position.x + 100.0, bb.position.y + 10.0), Pal.c("white"), 28)
 		return
 	var ttl := Gfx.L("記録の選択", "SELECT A FILE")
-	Gfx.jtext(self, ttl, Vector2(120.0, 56.0), Pal.c("white"), 36)
+	Gfx.jtext(self, ttl, Vector2(120.0, 96.0), Pal.c("white"), 36)
 	for i in Save.SLOTS:
 		var r := _row(i)
 		draw_rect(r, Pal.c("panel"))
@@ -100,9 +100,9 @@ func _draw() -> void:
 		if erase_mode and Save.has_slot(i):
 			edge = Pal.c("red")
 		draw_rect(r, edge, false, 2.0)
-		Gfx.jtext(self, "%s %d" % [Gfx.L("記録", "FILE"), i + 1], Vector2(r.position.x + 12.0, r.position.y + 6.0), Pal.c("cyan"), 28)
+		Gfx.jtext(self, "%s %d" % [Gfx.L("記録", "FILE"), i + 1], Vector2(r.position.x + 24.0, r.position.y + 12.0), Pal.c("cyan"), 28)
 		if not Save.has_slot(i):
-			Gfx.jtext(self, Gfx.L("空き", "EMPTY"), Vector2(r.position.x + 120.0, r.position.y + 16.0), Pal.c("dgray"), 27)
+			Gfx.jtext(self, Gfx.L("空き", "EMPTY"), Vector2(r.position.x + 240.0, r.position.y + 38.0), Pal.c("dgray"), 28)
 			continue
 		var info: Dictionary = Save.slot_info(i)
 		var mi := 0
@@ -118,11 +118,11 @@ func _draw() -> void:
 				var ee: Dictionary = e
 				lvs += "%d " % int(ee["lv"])
 		Gfx.jtext(self, "%s %d / 12" % [Gfx.L("戦い", "BATTLE"), mini(mi + 1, 40)], Vector2(r.position.x + 120.0, r.position.y + 6.0), Pal.c("white"), 27)
-		Gfx.text(self, "LV " + lvs, Vector2(r.position.x + 120.0, r.position.y + 30.0), Pal.c("gray"))
+		Gfx.text(self, "LV " + lvs, Vector2(r.position.x + 240.0, r.position.y + 62.0), Pal.c("gray"))
 		if cyc > 1:
-			Gfx.jtext(self, "%d %s" % [cyc, Gfx.L("周目", "CYCLE")], Vector2(r.position.x + 420.0, r.position.y + 6.0), Pal.c("yellow"), 27)
+			Gfx.jtext(self, "%d %s" % [cyc, Gfx.L("周目", "CYCLE")], Vector2(r.position.x + 840.0, r.position.y + 12.0), Pal.c("yellow"), 28)
 	if note != "":
-		Gfx.jtext(self, note, Vector2(120.0, 524.0), Pal.c("lgreen"), 26)
+		Gfx.jtext(self, note, Vector2(120.0, 560.0), Pal.c("lgreen"), 26)
 	var lb: Array = [Gfx.L("消去", "ERASE"), Gfx.L("戻る", "BACK")]
 	for i in 2:
 		var b2 := _btn(i)

@@ -128,10 +128,8 @@ func _setup() -> void:
 
 func _push(u: Dictionary, team: int) -> void:
 	u["px"] = Vector2(float(u["x"]) * TS, float(u["y"]) * TS)
-	u["face"] = 1
 	u["dir"] = Vector2i(0, 1)
 	if team == 1:
-		u["face"] = -1
 		u["dir"] = Vector2i(-1, 0)
 	u["flash"] = 0.0
 	u["fade"] = 1.0
@@ -346,10 +344,6 @@ func _confirm_face(d: Vector2i) -> void:
 		return
 	var u: Dictionary = units[active]
 	u["dir"] = d
-	if d.x > 0:
-		u["face"] = 1
-	elif d.x < 0:
-		u["face"] = -1
 	Sound.play("confirm")
 	_clear_sel()
 	sub = Sub.MOVE
@@ -590,11 +584,9 @@ func _face_to(a: int, b: int) -> void:
 	var ub: Dictionary = units[b]
 	var dx: int = int(ub["x"]) - int(ua["x"])
 	var dy: int = int(ub["y"]) - int(ua["y"])
-	if absi(dx) >= absi(dy):
+	if absi(dx) >= absi(dy) and dx != 0:
 		ua["dir"] = Vector2i(signi(dx), 0)
-		if dx != 0:
-			ua["face"] = signi(dx)
-	else:
+	elif dy != 0:
 		ua["dir"] = Vector2i(0, signi(dy))
 
 func _gain_exp(i: int, n: int) -> void:
@@ -684,11 +676,10 @@ func _step_anim(dt: float) -> void:
 		var b1: Vector2i = path[step + 1]
 		var p2: float = clampf(t / WALK, 0.0, 1.0)
 		u["px"] = Vector2(float(a1.x) * TS, float(a1.y) * TS).lerp(Vector2(float(b1.x) * TS, float(b1.y) * TS), p2)
-		u["dir"] = Vector2i(b1.x - a1.x, b1.y - a1.y)
-		if b1.x > a1.x:
-			u["face"] = 1
-		elif b1.x < a1.x:
-			u["face"] = -1
+		if b1.x != a1.x:
+			u["dir"] = Vector2i(signi(b1.x - a1.x), 0)
+		elif b1.y != a1.y:
+			u["dir"] = Vector2i(0, signi(b1.y - a1.y))
 		_follow(Vector2(u["px"]))
 		if p2 >= 1.0:
 			anim["step"] = step + 1
@@ -1217,16 +1208,6 @@ func _draw_units() -> void:
 			continue
 		if sp.y < VIEW.position.y - 128.0 or sp.y > VIEW.end.y + 128.0:
 			continue
-		var frame := 0
-		var moving := false
-		if not anim.is_empty():
-			if String(anim["k"]) == "move" and int(anim["u"]) == int(i):
-				moving = true
-		if moving:
-			if int(float(anim["t"]) / (WALK * 0.5)) % 2 == 1:
-				frame = 1
-		elif int(Time.get_ticks_msec() / 520) % 2 == 1:
-			frame = 1
 		var fd0: Vector2i = u["dir"]
 		var dir_i := 0
 		var flip := false
@@ -1237,6 +1218,14 @@ func _draw_units() -> void:
 		elif fd0.x != 0:
 			dir_i = 1
 			flip = fd0.x < 0
+		var frame := 0
+		var moving := false
+		if not anim.is_empty():
+			if String(anim["k"]) == "move" and int(anim["u"]) == int(i):
+				moving = true
+		if moving and Gfx.has_walk(String(u["kind"]), dir_i):
+			if int(float(anim["t"]) / (WALK * 0.5)) % 2 == 1:
+				frame = 1
 		var nm := Gfx.unit_key(String(u["kind"]), dir_i, frame)
 		var dst := Rect2(sp.x - 16.0, sp.y - 32.0, 96.0, 96.0)
 		var tint := Color(1, 1, 1, float(u["fade"]))

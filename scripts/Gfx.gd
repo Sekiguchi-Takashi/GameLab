@@ -233,17 +233,20 @@ func _ext_image(name: String) -> Image:
 	return img
 
 func unit_key(kind: String, dir_i: int, frame: int) -> String:
-	var d := "D%d" % dir_i
-	var f := ""
 	if frame == 1:
-		f = "b"
-	var key := "%s_%s%s" % [kind, d, f]
-	if Art.A.has(key) or ResourceLoader.exists("res://art/%s.png" % key):
-		return key
+		var wk := "%s_D%db" % [kind, dir_i]
+		if ResourceLoader.exists("res://art/%s.png" % wk):
+			return wk
 	var base := "%s_D%d" % [kind, dir_i]
 	if ResourceLoader.exists("res://art/%s.png" % base):
 		return base
-	return "%s%d" % [kind, frame]
+	var front := "%s_D0" % kind
+	if ResourceLoader.exists("res://art/%s.png" % front):
+		return front
+	return "%s0" % kind
+
+func has_walk(kind: String, dir_i: int) -> bool:
+	return ResourceLoader.exists("res://art/%s_D%db.png" % [kind, dir_i])
 
 func draw_unit(ci: CanvasItem, name: String, flip: bool, dst: Rect2, tint: Color) -> void:
 	var t := art_v(name, false, flip)

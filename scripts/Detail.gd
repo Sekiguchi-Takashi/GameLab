@@ -28,10 +28,10 @@ func _list() -> Array:
 	return out
 
 func _row(i: int) -> Rect2:
-	return Rect2(320.0, 90.0 + float(i) * 60.0, 300.0, 28.0)
+	return Rect2(660.0, 190.0 + float(i) * 62.0, 590.0, 56.0)
 
 func _btn(i: int) -> Rect2:
-	return Rect2(20.0 + float(i) * 300.0, 306.0, 140.0, 32.0)
+	return Rect2(40.0 + float(i) * 300.0, 616.0, 280.0, 68.0)
 
 func tap(p: Vector2) -> void:
 	if _btn(2).has_point(p):

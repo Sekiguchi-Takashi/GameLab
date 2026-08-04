@@ -3,7 +3,7 @@ extends Node2D
 signal pick(what: String)
 
 func _btn(i: int) -> Rect2:
-	return Rect2(200.0, 150.0 + float(i) * 84.0, 240.0, 32.0)
+	return Rect2(400.0, 300.0 + float(i) * 84.0, 480.0, 68.0)
 
 func _labels() -> Array:
 	return [Gfx.L("はじめる", "PLAY"), Gfx.L("戦績", "RECORDS"), Gfx.L("確認リスト", "CHECK LIST"), Gfx.L("音 " + _snd(), "SOUND " + _snd())]
@@ -44,8 +44,8 @@ func _draw() -> void:
 	Gfx.jtext(self, sub, Vector2(640.0 - Gfx.jwidth(sub, 24) * 0.5, 184.0), Pal.c("gray"), 24)
 	Gfx.text(self, "FONT " + Gfx.jfont_path, Vector2(12.0, 664.0), Pal.c("dgray"))
 	Gfx.text(self, "ART %d EXTERNAL" % Gfx.ext_count, Vector2(12.0, 692.0), Pal.c("dgray"))
-	Gfx.draw_unit(self, Gfx.unit_key("KNIGHT", 0, 0), false, Rect2(192.0, 300.0, 192.0, 192.0), Color(1, 1, 1, 1))
-	Gfx.draw_unit(self, Gfx.unit_key("ORC", 1, 0), true, Rect2(904.0, 300.0, 192.0, 192.0), Color(1, 1, 1, 1))
+	Gfx.draw_unit(self, Gfx.unit_key("KNIGHT", 0, 0), false, Rect2(150.0, 296.0, 200.0, 200.0), Color(1, 1, 1, 1))
+	Gfx.draw_unit(self, Gfx.unit_key("ORC", 1, 0), true, Rect2(930.0, 296.0, 200.0, 200.0), Color(1, 1, 1, 1))
 	var l := _labels()
 	for i in l.size():
 		var b := _btn(i)

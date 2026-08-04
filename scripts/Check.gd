@@ -32,11 +32,11 @@ func rows() -> int:
 	return 8
 
 func _row_rect(i: int) -> Rect2:
-	return Rect2(8.0, 44.0 + float(i) * 64.0, 624.0, 30.0)
+	return Rect2(16.0, 96.0 + float(i) * 66.0, 1248.0, 62.0)
 
 func _btn(i: int) -> Rect2:
-	var w := 304.0
-	return Rect2(8.0 + float(i) * (w + 16.0), 322.0, w, 30.0)
+	var w := 300.0
+	return Rect2(16.0 + float(i) * (w + 16.0), 636.0, w, 62.0)
 
 func tap(p: Vector2) -> bool:
 	if _btn(0).has_point(p):

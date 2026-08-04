@@ -25,7 +25,7 @@ func setup(i: int) -> void:
 		Save.trace("PU%d_%s_L%d" % [k, kind.substr(0, 3), _lv(e)])
 
 func _row(i: int) -> Rect2:
-	return Rect2(16.0, 92.0 + float(i) * 80.0, 400.0, 36.0)
+	return Rect2(32.0, 184.0 + float(i) * 86.0, 800.0, 78.0)
 
 func _btn_go() -> Rect2:
 	return Rect2(880.0, 592.0, 368.0, 80.0)
@@ -62,9 +62,9 @@ func _draw() -> void:
 	draw_rect(Rect2(0.0, 0.0, 1280.0, 720.0), Color(0.05, 0.06, 0.09, 1.0))
 	_mark("D1")
 	var m: Dictionary = Maps.get_map(map_i)
-	Gfx.jtext(self, "%s%d  %s" % [Gfx.L("第", "BATTLE "), map_i + 1, Maps.name_of(m)], Vector2(32.0, 28.0), Pal.c("white"), 32)
-	Gfx.jtext(self, "%s  %s" % [Gfx.L("目的", "OBJECTIVE"), Maps.win_text(m)], Vector2(32.0, 80.0), Pal.c("cyan"), 26)
-	Gfx.jtext(self, Gfx.L("出撃する隊", "YOUR COMPANY"), Vector2(32.0, 132.0), Pal.c("gray"), 24)
+	Gfx.jtext(self, "%s%d  %s" % [Gfx.L("第", "BATTLE "), map_i + 1, Maps.name_of(m)], Vector2(32.0, 24.0), Pal.c("white"), 32)
+	Gfx.jtext(self, "%s  %s" % [Gfx.L("目的", "OBJECTIVE"), Maps.win_text(m)], Vector2(32.0, 78.0), Pal.c("cyan"), 26)
+	Gfx.jtext(self, Gfx.L("出撃する隊", "YOUR COMPANY"), Vector2(32.0, 140.0), Pal.c("gray"), 24)
 	_mark("D2")
 	for i in Save.roster.size():
 		_mark("DR%d" % i)
@@ -73,15 +73,17 @@ func _draw() -> void:
 		draw_rect(rr, Pal.c("panel"))
 		draw_rect(rr, Pal.c("line"), false, 1.0)
 		_mark("DA%d" % i)
-		Gfx.draw_unit(self, Gfx.unit_key(String(r["kind"]), 0, 0), false, Rect2(rr.position.x + 2.0, rr.position.y - 4.0, 44.0, 44.0), Color(1, 1, 1, 1))
-		Gfx.jtext(self, "%s  LV%d" % [Units.display(r), int(r["lv"])], Vector2(rr.position.x + 52.0, rr.position.y + 2.0), Pal.c("white"), 27)
-		Gfx.text(self, "HP %d/%d  MP %d  ATK %d  DEF %d" % [int(r["hp"]), int(r["mhp"]), int(r["mp"]), int(r["atk"]), int(r["def"])], Vector2(rr.position.x + 52.0, rr.position.y + 20.0), Pal.c("gray"))
+		Gfx.draw_unit(self, Gfx.unit_key(String(r["kind"]), 0, 0), false, Rect2(rr.position.x + 6.0, rr.position.y - 6.0, 88.0, 88.0), Color(1, 1, 1, 1))
+		Gfx.jtext(self, "%s  LV%d" % [Units.display(r), int(r["lv"])], Vector2(rr.position.x + 104.0, rr.position.y + 6.0), Pal.c("white"), 26)
+		Gfx.text(self, "HP %d/%d  MP %d  ATK %d  DEF %d" % [int(r["hp"]), int(r["mhp"]), int(r["mp"]), int(r["atk"]), int(r["def"])], Vector2(rr.position.x + 104.0, rr.position.y + 46.0), Pal.c("gray"))
 		_mark("DP%d" % i)
 		var wl: String = Units.weapon_label(String(r["weapon"]))
-		Gfx.jtext(self, wl, Vector2(rr.position.x + 250.0, rr.position.y + 2.0), Pal.c("cyan"), 24)
+		Gfx.jtext(self, wl, Vector2(rr.position.x + 520.0, rr.position.y + 8.0), Pal.c("cyan"), 24)
 		if Units.can_promote(r):
-			Gfx.jtext(self, Gfx.L("昇格可", "PROMOTE"), Vector2(rr.position.x + 250.0, rr.position.y + 19.0), Pal.c("yellow"), 24)
+			Gfx.jtext(self, Gfx.L("昇格可", "PROMOTE"), Vector2(rr.position.x + 520.0, rr.position.y + 46.0), Pal.c("yellow"), 24)
 	Gfx.jtext(self, Gfx.L("全員が出撃する。", "ALL UNITS DEPLOY."), Vector2(880.0, 192.0), Pal.c("gray"), 24)
+	Gfx.jtext(self, Gfx.L("HPとMPは戦闘前に", "HP AND MP REFILL"), Vector2(880.0, 232.0), Pal.c("gray"), 24)
+	Gfx.jtext(self, Gfx.L("全回復する。", "BEFORE EACH BATTLE."), Vector2(880.0, 272.0), Pal.c("gray"), 24)
 	Gfx.jtext(self, Gfx.L("行をタップで", "TAP A ROW FOR"), Vector2(880.0, 352.0), Pal.c("cyan"), 24)
 	Gfx.jtext(self, Gfx.L("装備と昇格。", "GEAR AND PROMOTION."), Vector2(880.0, 392.0), Pal.c("cyan"), 24)
 	_mark("D3")

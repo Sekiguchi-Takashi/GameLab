@@ -216,7 +216,7 @@ func _draw() -> void:
 		var n := 0
 		for e in Save.roster:
 			var ee: Dictionary = e
-			Gfx.draw_unit(self, "%s0" % String(ee["kind"]), false, Rect2(70.0 + float(n) * 200.0, 210.0, 72.0, 72.0), Color(1, 1, 1, 1))
+			Gfx.draw_unit(self, Gfx.unit_key(String(ee["kind"]), 0, 0), false, Rect2(70.0 + float(n) * 200.0, 210.0, 72.0, 72.0), Color(1, 1, 1, 1))
 			n += 1
 		var b := _end_btn()
 		draw_rect(b, Pal.c("panel"))

@@ -73,7 +73,7 @@ func _draw() -> void:
 		draw_rect(rr, Pal.c("panel"))
 		draw_rect(rr, Pal.c("line"), false, 1.0)
 		_mark("DA%d" % i)
-		Gfx.draw_unit(self, "%s0" % String(r["kind"]), false, Rect2(rr.position.x + 2.0, rr.position.y - 4.0, 44.0, 44.0), Color(1, 1, 1, 1))
+		Gfx.draw_unit(self, Gfx.unit_key(String(r["kind"]), 0, 0), false, Rect2(rr.position.x + 2.0, rr.position.y - 4.0, 44.0, 44.0), Color(1, 1, 1, 1))
 		Gfx.jtext(self, "%s  LV%d" % [Units.display(r), int(r["lv"])], Vector2(rr.position.x + 52.0, rr.position.y + 2.0), Pal.c("white"), 27)
 		Gfx.text(self, "HP %d/%d  MP %d  ATK %d  DEF %d" % [int(r["hp"]), int(r["mhp"]), int(r["mp"]), int(r["atk"]), int(r["def"])], Vector2(rr.position.x + 52.0, rr.position.y + 20.0), Pal.c("gray"))
 		_mark("DP%d" % i)

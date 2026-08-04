@@ -2,7 +2,7 @@ extends Node2D
 
 signal finished(win: bool)
 
-enum Sub { MOVE, TARGET, SKILL, ITEM }
+enum Sub { MOVE, TARGET, SKILL, ITEM, FACE }
 
 const VIEW := Rect2(0.0, 40.0, 1280.0, 592.0)
 const TS := 64.0
@@ -317,10 +317,42 @@ func _next_unit() -> void:
 		msg = Gfx.L("敵の手番", "ENEMY TURN")
 		ai_t = 0.35
 
+const FACE_DIRS := [Vector2i(0, 1), Vector2i(-1, 0), Vector2i(0, -1), Vector2i(1, 0)]
+
+func _face_btn(i: int) -> Rect2:
+	return Rect2(556.0 + float(i) * 140.0, 644.0, 128.0, 60.0)
+
 func _end_unit() -> void:
 	if active >= 0:
 		units[active]["acted"] = true
+		if not over and int(units[active]["team"]) == 0:
+			reach.clear()
+			parent.clear()
+			targets.clear()
+			path_preview.clear()
+			pending = -1
+			item_open = false
+			sub = Sub.FACE
+			msg = Gfx.L("向きを決める", "CHOOSE FACING")
+			return
 	_clear_sel()
+	_check_over()
+	if over:
+		return
+	_next_unit()
+
+func _confirm_face(d: Vector2i) -> void:
+	if active < 0:
+		return
+	var u: Dictionary = units[active]
+	u["dir"] = d
+	if d.x > 0:
+		u["face"] = 1
+	elif d.x < 0:
+		u["face"] = -1
+	Sound.play("confirm")
+	_clear_sel()
+	sub = Sub.MOVE
 	_check_over()
 	if over:
 		return
@@ -878,6 +910,22 @@ func _tap(p: Vector2) -> void:
 		Sound.play("select")
 		_open_skill()
 		return
+	if sub == Sub.FACE:
+		for i in 4:
+			if _face_btn(i).has_point(p):
+				_confirm_face(FACE_DIRS[i])
+				return
+		var c2 := _cell(p)
+		if board.inside(c2.x, c2.y):
+			var u2: Dictionary = units[active]
+			var dx: int = c2.x - int(u2["x"])
+			var dy: int = c2.y - int(u2["y"])
+			if dx != 0 or dy != 0:
+				if absi(dx) >= absi(dy):
+					_confirm_face(Vector2i(signi(dx), 0))
+				else:
+					_confirm_face(Vector2i(0, signi(dy)))
+		return
 	if item_open:
 		for i in Units.ITEMS.size():
 			if _item_row(i).has_point(p):
@@ -1179,8 +1227,17 @@ func _draw_units() -> void:
 				frame = 1
 		elif int(Time.get_ticks_msec() / 520) % 2 == 1:
 			frame = 1
-		var nm := "%s%d" % [u["kind"], frame]
-		var flip: bool = int(u["face"]) < 0
+		var fd0: Vector2i = u["dir"]
+		var dir_i := 0
+		var flip := false
+		if fd0.y < 0:
+			dir_i = 2
+		elif fd0.y > 0:
+			dir_i = 0
+		elif fd0.x != 0:
+			dir_i = 1
+			flip = fd0.x < 0
+		var nm := Gfx.unit_key(String(u["kind"]), dir_i, frame)
 		var dst := Rect2(sp.x - 16.0, sp.y - 32.0, 96.0, 96.0)
 		var tint := Color(1, 1, 1, float(u["fade"]))
 		if bool(u["acted"]) and int(u["hp"]) > 0:
@@ -1268,7 +1325,22 @@ func _draw_hud() -> void:
 					elif sk == "BLAST":
 						mult = 0.9
 				Gfx.text(self, "%d DMG %s" % [forecast(active, pending, mult), flank_name(active, pending)], Vector2(500.0, 668.0), Pal.c("orange"))
-	if not over and active >= 0 and int(units[active]["team"]) == 0:
+	if not over and active >= 0 and int(units[active]["team"]) == 0 and sub == Sub.FACE:
+		var fl: Array = [Gfx.L("下", "DOWN"), Gfx.L("左", "LEFT"), Gfx.L("上", "UP"), Gfx.L("右", "RIGHT")]
+		var cur: Vector2i = units[active]["dir"]
+		for i in 4:
+			var fb := _face_btn(i)
+			_panel(fb)
+			var fc: Color = Pal.c("white")
+			if FACE_DIRS[i] == cur:
+				var g2: float = 0.5 + 0.5 * sin(float(Time.get_ticks_msec()) * 0.008)
+				draw_rect(fb, Color(0.95, 0.80, 0.25, 0.18 + 0.22 * g2))
+				draw_rect(fb, Color(0.98, 0.86, 0.35, 0.6), false, 2.0)
+				fc = Pal.c("yellow")
+			var fs: String = fl[i]
+			Gfx.jtext(self, fs, Vector2(fb.position.x + (fb.size.x - Gfx.jwidth(fs, 28)) * 0.5, fb.position.y + 14.0), fc, 28)
+		Gfx.jtext(self, Gfx.L("マップをタップしてもよい", "OR TAP THE MAP"), Vector2(12.0, 696.0), Pal.c("gray"), 22)
+	elif not over and active >= 0 and int(units[active]["team"]) == 0:
 		var lbls: Array = [Gfx.L("攻撃", "ATTACK"), Units.skill_label(_skill_of(active)), Gfx.L("道具", "ITEM"), Gfx.L("待機", "WAIT")]
 		if String(lbls[1]) == "":
 			lbls[1] = Gfx.L("技", "SKILL")
@@ -1332,7 +1404,7 @@ func _draw_result() -> void:
 					continue
 				var tx: float = 180.0 + float(n) * 200.0
 				var ty: float = 300.0 - 40.0 * clampf(g * 3.0 - float(n) * 0.4, 0.0, 1.0)
-				Gfx.draw_unit(self, "%s0" % String(d2["kind"]), false, Rect2(tx, ty, 128.0, 128.0), Color(1, 1, 1, clampf(g * 3.0 - float(n) * 0.4, 0.0, 1.0)))
+				Gfx.draw_unit(self, Gfx.unit_key(String(d2["kind"]), 0, 0), false, Rect2(tx, ty, 128.0, 128.0), Color(1, 1, 1, clampf(g * 3.0 - float(n) * 0.4, 0.0, 1.0)))
 				n += 1
 	else:
 		var u2: float = clampf(over_t / 1.2, 0.0, 1.0)

@@ -97,7 +97,7 @@ func _draw() -> void:
 		return
 	var e: Dictionary = _entry()
 	var kind: String = String(e["kind"])
-	Gfx.draw_unit(self, "%s0" % kind, false, Rect2(40.0, 48.0, 160.0, 160.0), Color(1, 1, 1, 1))
+	Gfx.draw_unit(self, Gfx.unit_key(kind, 0, 0), false, Rect2(40.0, 48.0, 160.0, 160.0), Color(1, 1, 1, 1))
 	Gfx.jtext(self, "%s  LV%d" % [Units.display(e), int(e["lv"])], Vector2(224.0, 48.0), Pal.c("white"), 32)
 	var w := String(e["weapon"])
 	var wa: int = Units.weapon_atk(w)

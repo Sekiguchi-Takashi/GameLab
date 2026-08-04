@@ -44,8 +44,8 @@ func _draw() -> void:
 	Gfx.jtext(self, sub, Vector2(640.0 - Gfx.jwidth(sub, 24) * 0.5, 184.0), Pal.c("gray"), 24)
 	Gfx.text(self, "FONT " + Gfx.jfont_path, Vector2(12.0, 664.0), Pal.c("dgray"))
 	Gfx.text(self, "ART %d EXTERNAL" % Gfx.ext_count, Vector2(12.0, 692.0), Pal.c("dgray"))
-	Gfx.draw_unit(self, "KNIGHT0", false, Rect2(192.0, 300.0, 192.0, 192.0), Color(1, 1, 1, 1))
-	Gfx.draw_unit(self, "ORC0", true, Rect2(904.0, 300.0, 192.0, 192.0), Color(1, 1, 1, 1))
+	Gfx.draw_unit(self, Gfx.unit_key("KNIGHT", 0, 0), false, Rect2(192.0, 300.0, 192.0, 192.0), Color(1, 1, 1, 1))
+	Gfx.draw_unit(self, Gfx.unit_key("ORC", 1, 0), true, Rect2(904.0, 300.0, 192.0, 192.0), Color(1, 1, 1, 1))
 	var l := _labels()
 	for i in l.size():
 		var b := _btn(i)

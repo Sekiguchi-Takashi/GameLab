@@ -232,6 +232,19 @@ func _ext_image(name: String) -> Image:
 	ext_count += 1
 	return img
 
+func unit_key(kind: String, dir_i: int, frame: int) -> String:
+	var d := "D%d" % dir_i
+	var f := ""
+	if frame == 1:
+		f = "b"
+	var key := "%s_%s%s" % [kind, d, f]
+	if Art.A.has(key) or ResourceLoader.exists("res://art/%s.png" % key):
+		return key
+	var base := "%s_D%d" % [kind, dir_i]
+	if ResourceLoader.exists("res://art/%s.png" % base):
+		return base
+	return "%s%d" % [kind, frame]
+
 func draw_unit(ci: CanvasItem, name: String, flip: bool, dst: Rect2, tint: Color) -> void:
 	var t := art_v(name, false, flip)
 	ci.draw_texture_rect_region(t, dst, Rect2(0.0, 0.0, float(t.get_width()), float(t.get_height())), tint)
@@ -269,6 +282,12 @@ func art_v(name: String, white: bool, flip: bool) -> ImageTexture:
 		var ot := ImageTexture.create_from_image(oimg)
 		_cache[key] = ot
 		return ot
+	if not Art.A.has(name):
+		var blank := Image.create(4, 4, false, Image.FORMAT_RGBA8)
+		blank.fill(Color(0, 0, 0, 0))
+		var bt := ImageTexture.create_from_image(blank)
+		_cache[key] = bt
+		return bt
 	var e: Dictionary = Art.A[name]
 	var hexes: Array = e["p"]
 	var cols: Array = []

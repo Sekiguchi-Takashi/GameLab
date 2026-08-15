@@ -207,6 +207,9 @@ git push -u origin main
 
 **必須事項**
 
+- `actions/upload-artifact` は使わない。Artifacts の無料枠（0.5GB）が枯渇すると
+  `Artifact storage quota has been hit` でビルドが失敗する。APK は Release から配布する
+
 - `git pull --rebase origin main` が必須。カタログ管理システムがAPI経由で
   `.github/workflows/release.yml` と `ci/appathy.keystore` を直接コミットしているため、
   これが無いと push が rejected になる

@@ -1237,12 +1237,41 @@ func _draw_units() -> void:
 		if int(u["hp"]) > 0:
 			var ratio: float = float(u["hp"]) / float(u["mhp"])
 			var vr: float = clampf(float(u["hpv"]) / float(u["mhp"]), 0.0, 1.0)
-			draw_rect(Rect2(sp.x + 6.0, sp.y + 54.0, 52.0, 8.0), Color(0, 0, 0, 0.75))
+			var focus := int(i) == active
+			if int(i) == pending:
+				focus = true
+			var bw := 48.0
+			var bh := 4.0
+			var by := sp.y + 56.0
+			var bx := sp.x + 8.0
+			if focus:
+				bw = 60.0
+				bh = 9.0
+				by = sp.y + 52.0
+				bx = sp.x + 2.0
+			draw_rect(Rect2(bx - 2.0, by - 2.0, bw + 4.0, bh + 4.0), Color(0, 0, 0, 0.8))
 			if vr > ratio:
-				draw_rect(Rect2(sp.x + 8.0, sp.y + 56.0, 48.0 * vr, 4.0), Pal.c("red"))
+				draw_rect(Rect2(bx, by, bw * vr, bh), Pal.c("red"))
 			else:
-				draw_rect(Rect2(sp.x + 8.0, sp.y + 56.0, 48.0 * vr, 4.0), Pal.c("lgreen"))
-			draw_rect(Rect2(sp.x + 8.0, sp.y + 56.0, 48.0 * ratio, 4.0), Pal.team(int(u["team"])))
+				draw_rect(Rect2(bx, by, bw * vr, bh), Pal.c("lgreen"))
+			var hc: Color = Pal.team(int(u["team"]))
+			if focus:
+				if ratio <= 0.3:
+					hc = Pal.c("red")
+				elif ratio <= 0.6:
+					hc = Pal.c("yellow")
+				else:
+					hc = Pal.c("lgreen")
+			draw_rect(Rect2(bx, by, bw * ratio, bh), hc)
+			if focus:
+				draw_rect(Rect2(bx - 2.0, by - 2.0, bw + 4.0, bh + 4.0), Pal.c("white"), false, 2.0)
+				var ht := "%d/%d" % [int(u["hp"]), int(u["mhp"])]
+				var hw := float(Gfx.text_width(ht))
+				var hx := bx + (bw - hw) * 0.5
+				var hy := by - 22.0
+				draw_rect(Rect2(hx - 6.0, hy - 3.0, hw + 12.0, 22.0), Color(0, 0, 0, 0.78))
+				draw_rect(Rect2(hx - 6.0, hy - 3.0, hw + 12.0, 22.0), hc, false, 1.0)
+				Gfx.text(self, ht, Vector2(hx, hy + 2.0), Pal.c("white"))
 			if bool(u["guard"]):
 				draw_rect(Rect2(sp.x + 4.0, sp.y - 4.0, 12.0, 12.0), Pal.c("cyan"))
 			if bool(u["boss"]):
@@ -1296,7 +1325,24 @@ func _draw_hud() -> void:
 		if who != "":
 			nm2 = "%s %s" % [who, nm2]
 		Gfx.jtext(self, "%s LV%d" % [nm2, int(u["lv"])], Vector2(12.0, 640.0), Pal.c("white"), 26)
-		Gfx.text(self, "HP %d/%d  MP %d" % [int(u["hp"]), int(u["mhp"]), int(u["mp"])], Vector2(12.0, 664.0), Pal.c("lgreen"))
+		var pr: float = float(u["hp"]) / float(u["mhp"])
+		var pc: Color = Pal.c("lgreen")
+		if pr <= 0.3:
+			pc = Pal.c("red")
+		elif pr <= 0.6:
+			pc = Pal.c("yellow")
+		Gfx.jtext(self, "HP", Vector2(12.0, 668.0), Pal.c("gray"), 24)
+		Gfx.jtext(self, "%d/%d" % [int(u["hp"]), int(u["mhp"])], Vector2(52.0, 662.0), pc, 30)
+		var pbw := 150.0
+		var pbx := 12.0
+		var pby := 700.0
+		draw_rect(Rect2(pbx - 2.0, pby - 2.0, pbw + 4.0, 14.0), Color(0, 0, 0, 0.8))
+		var pvr: float = clampf(float(u["hpv"]) / float(u["mhp"]), 0.0, 1.0)
+		if pvr > pr:
+			draw_rect(Rect2(pbx, pby, pbw * pvr, 10.0), Pal.c("red"))
+		draw_rect(Rect2(pbx, pby, pbw * pr, 10.0), pc)
+		draw_rect(Rect2(pbx - 2.0, pby - 2.0, pbw + 4.0, 14.0), Pal.c("line"), false, 1.0)
+		Gfx.jtext(self, "MP %d" % int(u["mp"]), Vector2(180.0, 668.0), Pal.c("cyan"), 24)
 		Gfx.text(self, "ATK %d" % int(u["atk"]), Vector2(300.0, 644.0), Pal.c("gray"))
 		Gfx.text(self, "DEF %d" % int(u["def"]), Vector2(300.0, 668.0), Pal.c("gray"))
 		Gfx.text(self, "MOV %d" % int(u["mov"]), Vector2(400.0, 644.0), Pal.c("gray"))

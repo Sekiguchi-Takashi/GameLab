@@ -32,18 +32,13 @@ GameLab/
     LOG/001_fclab.md     検証記録
 ```
 
-## ビルドと配布（恒久ルール）
+## ビルドと配布
 
 ```
 bash ~/GameLab/deploy.sh "コメント"
 ```
 
-**push とタグ発行を1コマンドで行う。** タグを打つと Actions がビルドして Release を作り、
-自作アプリストアに更新として現れる。
-
-`deploy.sh` には `git pull --rebase origin main` が必須。カタログ管理システムがAPI経由で
-`.github/workflows/release.yml` と `ci/appathy.keystore` を直接コミットしているため、
-これが無いと push が rejected になる。**この2ファイルと `ci/` は削除しない。**
+push すると GitHub Actions が走り、Releases に `build-<番号>` として APK が出る。
 **エラーの一次発見者はClaude。** ユーザーに渡るのはビルドが通ったAPKだけ。
 
 ## 現在のゲーム内容（v5.4）

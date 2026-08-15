@@ -184,40 +184,7 @@ Godotが入力イベントをノードツリーに伝播している最中に、
 
 ---
 
-## 9. 配布の型（恒久ルール）
-
-`deploy.sh` は **push とタグ発行までを1コマンドで完結**させる。GHUSER と REPO を該当リポジトリの値にする。
-
-```
-#!/data/data/com.termux/files/usr/bin/bash
-cd "$(dirname "$0")"
-TOKEN=$(git config --global github.token)
-GHUSER=Sekiguchi-Takashi
-REPO=<リポジトリ名>
-API=https://api.github.com/repos/${GHUSER}/${REPO}
-if [ ! -d .git ]; then git init -b main; fi
-git remote remove origin 2>/dev/null
-git remote add origin "https://${GHUSER}:${TOKEN}@github.com/${GHUSER}/${REPO}.git"
-git add -A
-git commit -m "${1:-update}"
-git pull --rebase origin main
-git push -u origin main
-... タグ発行（最新リリースのタグを取得して +1、refs/tags を作成）
-```
-
-**必須事項**
-
-- `actions/upload-artifact` は使わない。Artifacts の無料枠（0.5GB）が枯渇すると
-  `Artifact storage quota has been hit` でビルドが失敗する。APK は Release から配布する
-
-- `git pull --rebase origin main` が必須。カタログ管理システムがAPI経由で
-  `.github/workflows/release.yml` と `ci/appathy.keystore` を直接コミットしているため、
-  これが無いと push が rejected になる
-- 上記2ファイルと `ci/` ディレクトリは配布ビルドに必要。**削除しない**
-- タグを打つと Actions がビルドして Release を作り、自作アプリストアに更新として現れる
-- 納品時に「deploy.sh に pull --rebase とタグ発行を含めた」と明記する
-
-## 9-B. 旧・配布の型
+## 9. 配布の型
 
 ZIPは毎回別名。形式は `プロジェクト名_vX.X.zip`。展開後のトップレベルフォルダ名はプロジェクト名で固定。
 

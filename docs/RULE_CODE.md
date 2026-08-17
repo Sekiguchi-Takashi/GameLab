@@ -184,15 +184,40 @@ Godotが入力イベントをノードツリーに伝播している最中に、
 
 ---
 
-## 9. 配布の型
+## 9. 納品規約（恒久ルール）
 
-ZIPは毎回別名。形式は `プロジェクト名_vX.X.zip`。展開後のトップレベルフォルダ名はプロジェクト名で固定。
+### 9-1. deploy.sh
 
-```
-cd ~
-cp /sdcard/Download/プロジェクト名_vX.X.zip .
-unzip -o プロジェクト名_vX.X.zip
-bash ~/プロジェクト名/deploy.sh "vX.X 要約"
-```
+`push → pull --rebase → タグ発行` まで1コマンドで行う。
 
-`.git` を消さないため `rm -rf` は使わない。
+- 次タグは `git tag --list 'v*' | sort -V` の最大値から算出し、
+  `git tag <名>` / `git push origin <名>` で**ローカル発行**する。
+  **GitHub API の heads 参照は反映遅延で一つ前のコミットに付くため禁止。**
+- 第2引数に `notag` を渡したときは push のみ、タグ発行しない
+- `git pull --rebase origin main` は必須。カタログ管理システムがAPI経由で
+  `.github/workflows/release.yml` と `ci/appathy.keystore` を直接コミットしているため、
+  これが無いと push が rejected になる
+- 納品時に「deploy.sh に pull --rebase とタグ発行を含めた」と明記する
+
+### 9-2. CI
+
+- **`build.yml` は作らない。** CIは `release.yml`（タグ起動）のみ
+- **`actions/upload-artifact` は使わない。** Artifacts の無料枠 0.5GB が枯渇すると
+  `Artifact storage quota has been hit` で全ビルドが落ちる。APKは Release から配布する
+
+### 9-3. 保護対象
+
+`ci/` ディレクトリと `.github/workflows/release.yml` は配布ビルドに必要。
+**削除・追跡解除しない。** `.gitignore` にも入れない。
+
+### 9-4. ファイル削除を伴う納品
+
+`unzip -o` は端末の旧ファイルを消さないため、削除が必要な納品では
+`deploy.sh` に `rm -f <対象パス>` を追加する。
+
+### 9-5. 納品の形式
+
+- バージョン番号付きZIP + 同メッセージに実行4行ブロック
+- 冒頭に **【本番】** か **【テスト】** を明示
+- シェルは `echo` 禁止、対話入力禁止、トークンをチャットに貼らせない
+

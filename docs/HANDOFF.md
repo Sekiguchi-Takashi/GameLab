@@ -32,14 +32,19 @@ GameLab/
     LOG/001_fclab.md     検証記録
 ```
 
-## ビルドと配布
+## ビルドと配布（恒久ルール）
 
 ```
 bash ~/GameLab/deploy.sh "コメント"
+bash ~/GameLab/deploy.sh "コメント" notag
 ```
 
-push すると GitHub Actions が走り、Releases に `build-<番号>` として APK が出る。
-**エラーの一次発見者はClaude。** ユーザーに渡るのはビルドが通ったAPKだけ。
+`push → pull --rebase → タグ発行` を1コマンドで行う。`notag` を付けるとタグを打たない。
+次タグは `git tag --list 'v*' | sort -V` から算出し、ローカル発行する。
+タグを打つと `release.yml` がビルドして Release を作り、自作アプリストアに更新として現れる。
+
+`build.yml` は置かない。`ci/` と `.github/workflows/release.yml` は削除しない。
+詳細は `docs/RULE_CODE.md` の「9. 納品規約」を参照。
 
 ## 現在のゲーム内容（v5.4）
 

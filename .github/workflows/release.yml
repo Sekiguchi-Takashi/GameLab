@@ -79,3 +79,19 @@ jobs:
           files: build/GameLab.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Stamp sha256 into release notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -e
+          SUM=$(sha256sum build/GameLab.apk | cut -d ' ' -f 1)
+          REL=$(gh api repos/${GITHUB_REPOSITORY}/releases/tags/${TAG})
+          ID=$(printf '%s' "$REL" | jq -r .id)
+          BODY=$(printf '%s' "$REL" | jq -r '.body // ""')
+          BODY=$(printf '%s' "$BODY" | grep -v '^sha256 ' || true)
+          NEW="${BODY}"$'\n'"sha256 GameLab.apk ${SUM}"
+          jq -n --arg b "$NEW" '{body:$b}' > /tmp/body.json
+          gh api -X PATCH repos/${GITHUB_REPOSITORY}/releases/${ID} --input /tmp/body.json > /dev/null
+          printf 'stamped %s %s\n' "$TAG" "$SUM"

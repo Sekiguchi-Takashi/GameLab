@@ -19,6 +19,6 @@ git fetch --tags origin
 LATEST=$(git tag --list 'v[0-9]*' | sort -V | tail -1)
 NEXT=$(printf '%s' "$LATEST" | awk '/^v[0-9]+\.[0-9]+\.[0-9]+$/ { split($0,a,"."); sub("v","",a[1]); print "v" a[1] "." a[2] "." a[3]+1; next } /^v[0-9]+\.[0-9]+$/ { split($0,a,"."); sub("v","",a[1]); print "v" a[1] "." a[2] ".1"; next } { print "v1.1.1" }')
 if [ -z "$NEXT" ]; then NEXT=v1.1.1; fi
-git tag "$NEXT"
-git push origin "$NEXT"
+git tag -f "$NEXT"
+git push -f origin "refs/tags/${NEXT}"
 printf 'pushed and tagged %s\n' "$NEXT"
